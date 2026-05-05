@@ -1,0 +1,151 @@
+{
+  "name": "PipelineRun",
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string"
+    },
+    "pipeline_name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "sequential",
+        "swarm",
+        "parallel"
+      ],
+      "default": "sequential"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "running",
+        "paused",
+        "awaiting_approval",
+        "completed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_id": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "task": {
+            "type": "string"
+          },
+          "recommended_model": {
+            "type": "string"
+          },
+          "model_used": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "input_from": {
+            "type": "string"
+          },
+          "output_type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "output": {
+            "type": "string"
+          },
+          "tokens_used": {
+            "type": "number"
+          },
+          "cost_usd": {
+            "type": "number"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "routing_explanation": {
+            "type": "string"
+          },
+          "fallback_used": {
+            "type": "boolean"
+          },
+          "retry_count": {
+            "type": "number"
+          },
+          "error_message": {
+            "type": "string"
+          },
+          "needs_search": {
+            "type": "boolean"
+          },
+          "needs_approval": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "total_tokens": {
+      "type": "number",
+      "default": 0
+    },
+    "total_cost_usd": {
+      "type": "number",
+      "default": 0
+    },
+    "estimated_cost_usd": {
+      "type": "number",
+      "default": 0
+    },
+    "duration_ms": {
+      "type": "number",
+      "default": 0
+    },
+    "model_routing_mode": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "minimum",
+        "balanced",
+        "maximum"
+      ],
+      "default": "balanced"
+    },
+    "error_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_id": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "retry_attempt": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "task_id",
+    "pipeline_name"
+  ]
+}

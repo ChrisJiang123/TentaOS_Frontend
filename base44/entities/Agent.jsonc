@@ -1,0 +1,101 @@
+{
+  "name": "Agent",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "planner",
+        "researcher",
+        "coder",
+        "writer",
+        "operator",
+        "reviewer"
+      ],
+      "description": "Agent role"
+    },
+    "model_id": {
+      "type": "string",
+      "description": "Default model for this agent"
+    },
+    "system_prompt": {
+      "type": "string"
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Agent capabilities: web_search, code_execution, file_operations, data_analysis, email_draft"
+    },
+    "permission_level": {
+      "type": "string",
+      "enum": [
+        "observe",
+        "suggest",
+        "execute",
+        "autonomous"
+      ],
+      "default": "execute"
+    },
+    "approval_required_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Actions requiring approval: send_email, publish, spend, delete, external_write"
+    },
+    "cost_limit": {
+      "type": "number",
+      "default": 10
+    },
+    "temperature": {
+      "type": "number",
+      "default": 0.7
+    },
+    "max_retries": {
+      "type": "number",
+      "default": 2
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "avatar_color": {
+      "type": "string"
+    },
+    "tasks_completed": {
+      "type": "number",
+      "default": 0
+    },
+    "tasks_failed": {
+      "type": "number",
+      "default": 0
+    },
+    "avg_quality_score": {
+      "type": "number",
+      "default": 0
+    },
+    "total_tokens": {
+      "type": "number",
+      "default": 0
+    },
+    "total_cost": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "name",
+    "role"
+  ]
+}

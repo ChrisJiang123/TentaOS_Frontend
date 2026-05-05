@@ -1,0 +1,186 @@
+const translations = {
+  en: {
+    // Sidebar
+    dashboard: 'Dashboard',
+    pipeline: 'Pipeline',
+    agents: 'Agents',
+    approvals: 'Approvals',
+    models: 'Models',
+    pricing: 'Pricing',
+    billing: 'Billing',
+    triggers: 'Triggers',
+    settings: 'Settings',
+    desktopApp: 'Desktop App',
+    devDocs: 'Developer Docs',
+    docs: 'Docs',
+    collapse: 'Collapse',
+    logout: 'Logout',
+
+    // Dashboard
+    welcomeBack: 'Welcome back',
+    dashboardSubtitle: 'Launch tasks, monitor agents, approve actions',
+    allFilter: 'All',
+    activeFilter: 'Active',
+    completedFilter: 'Completed',
+    failedFilter: 'Failed',
+    tasks: 'tasks',
+    noTasksMatch: 'No tasks match this filter',
+
+    // Settings page
+    settingsTitle: 'Settings',
+    settingsSubtitle: 'Manage your account and preferences',
+    accountSection: 'Account',
+    preferencesSection: 'Preferences',
+    language: 'Language',
+    languageDesc: 'Choose your preferred interface language',
+    english: 'English',
+    chinese: '中文',
+    fullName: 'Full Name',
+    email: 'Email',
+    role: 'Role',
+    memberSince: 'Member Since',
+    dangerZone: 'Danger Zone',
+    logoutDesc: 'Sign out of your account',
+
+    // Stats
+    active: 'Active',
+    completed: 'Completed',
+    tokens: 'Tokens',
+    cost: 'Cost',
+    awaitingApproval: 'Awaiting Approval',
+
+    // Quick Actions
+    newTask: 'New Task',
+    newTaskDesc: 'Launch an AI task',
+    pipelineAction: 'Pipeline',
+    pipelineDesc: 'Build workflows',
+    agentsAction: 'Agents',
+    agentsDesc: 'Manage agents',
+
+    // Task statuses
+    queued: 'Queued',
+    planning: 'Planning',
+    running: 'Running',
+    paused: 'Paused',
+    awaiting_approval: 'Needs Approval',
+    cancelled: 'Cancelled',
+    failed: 'Failed',
+
+    // TaskDetail
+    backToDashboard: 'Back to Dashboard',
+    pause: 'Pause',
+    resume: 'Resume',
+    retry: 'Retry',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    steps: 'steps',
+    costBreakdown: 'Cost Breakdown',
+    total: 'Total',
+    taskNotFound: 'Task not found',
+
+    // Approvals
+    approvalCenter: 'Approval Center',
+    approvalSubtitle: 'Review and approve agent actions before execution',
+    pending: 'Pending',
+    resolved: 'Resolved',
+    approve: 'Approve',
+    reject: 'Reject',
+    revise: 'Revise',
+    showPreview: 'Show preview',
+    hidePreview: 'Hide preview',
+    noApprovals: 'No approvals',
+  },
+  zh: {
+    // Sidebar
+    dashboard: '控制台',
+    pipeline: '流水线',
+    agents: '智能体',
+    approvals: '审批',
+    models: '模型',
+    pricing: '定价',
+    billing: '账单',
+    triggers: '触发器',
+    settings: '设置',
+    desktopApp: '桌面应用',
+    devDocs: '开发文档',
+    docs: '文档',
+    collapse: '收起',
+    logout: '退出登录',
+
+    // Dashboard
+    welcomeBack: '欢迎回来',
+    dashboardSubtitle: '启动任务、监控智能体、审批操作',
+    allFilter: '全部',
+    activeFilter: '进行中',
+    completedFilter: '已完成',
+    failedFilter: '失败',
+    tasks: '个任务',
+    noTasksMatch: '没有匹配的任务',
+
+    // Settings page
+    settingsTitle: '设置',
+    settingsSubtitle: '管理你的账户和偏好',
+    accountSection: '账户信息',
+    preferencesSection: '偏好设置',
+    language: '语言',
+    languageDesc: '选择界面显示语言',
+    english: 'English',
+    chinese: '中文',
+    fullName: '姓名',
+    email: '邮箱',
+    role: '角色',
+    memberSince: '注册时间',
+    dangerZone: '危险操作',
+    logoutDesc: '退出当前账户',
+
+    // Stats
+    active: '进行中',
+    completed: '已完成',
+    tokens: 'Tokens',
+    cost: '花费',
+    awaitingApproval: '待审批',
+
+    // Quick Actions
+    newTask: '新任务',
+    newTaskDesc: '启动 AI 任务',
+    pipelineAction: '流水线',
+    pipelineDesc: '构建工作流',
+    agentsAction: '智能体',
+    agentsDesc: '管理智能体',
+
+    // Task statuses
+    queued: '排队中',
+    planning: '规划中',
+    running: '运行中',
+    paused: '已暂停',
+    awaiting_approval: '待审批',
+    cancelled: '已取消',
+    failed: '失败',
+
+    // TaskDetail
+    backToDashboard: '返回控制台',
+    pause: '暂停',
+    resume: '继续',
+    retry: '重试',
+    cancel: '取消',
+    delete: '删除',
+    steps: '步',
+    costBreakdown: '成本明细',
+    total: '合计',
+    taskNotFound: '任务未找到',
+
+    // Approvals
+    approvalCenter: '审批中心',
+    approvalSubtitle: '在执行前审核并批准智能体操作',
+    pending: '待处理',
+    resolved: '已处理',
+    approve: '批准',
+    reject: '拒绝',
+    revise: '修改',
+    showPreview: '显示预览',
+    hidePreview: '隐藏预览',
+    noApprovals: '暂无审批',
+  },
+};
+
+export default translations;

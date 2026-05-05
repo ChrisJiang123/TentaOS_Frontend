@@ -1,0 +1,220 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Task title"
+    },
+    "goal": {
+      "type": "string",
+      "description": "Task goal description"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "planning",
+        "running",
+        "paused",
+        "awaiting_approval",
+        "completed",
+        "failed",
+        "cancelled"
+      ],
+      "default": "queued"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "pack": {
+      "type": "string",
+      "enum": [
+        "growth",
+        "builder",
+        "custom"
+      ],
+      "default": "custom"
+    },
+    "workflow_id": {
+      "type": "string",
+      "description": "Associated PipelineRun ID"
+    },
+    "input_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Uploaded file URLs"
+    },
+    "estimated_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "actual_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "tokens_used": {
+      "type": "number",
+      "default": 0
+    },
+    "steps_completed": {
+      "type": "number",
+      "default": 0
+    },
+    "steps_total": {
+      "type": "number",
+      "default": 0
+    },
+    "current_step_index": {
+      "type": "number",
+      "default": 0,
+      "description": "Index of currently executing step"
+    },
+    "assigned_agents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "workflow_nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "agent": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "tokens": {
+            "type": "number"
+          },
+          "cost": {
+            "type": "number"
+          },
+          "retry_count": {
+            "type": "number"
+          },
+          "error_message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "execution_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "agent": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "tokens": {
+            "type": "number"
+          },
+          "cost": {
+            "type": "number"
+          },
+          "input_preview": {
+            "type": "string"
+          },
+          "output_preview": {
+            "type": "string"
+          },
+          "fallback": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Detailed execution log replacing timeline"
+    },
+    "user_rating": {
+      "type": "number"
+    },
+    "retry_count": {
+      "type": "number",
+      "default": 0
+    },
+    "max_retries": {
+      "type": "number",
+      "default": 2
+    },
+    "approval_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this task needs approval before high-risk steps"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "title",
+    "goal"
+  ]
+}

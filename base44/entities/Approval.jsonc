@@ -1,0 +1,90 @@
+{
+  "name": "Approval",
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string"
+    },
+    "task_title": {
+      "type": "string"
+    },
+    "pipeline_run_id": {
+      "type": "string"
+    },
+    "step_id": {
+      "type": "string",
+      "description": "Which pipeline step triggered this approval"
+    },
+    "step_index": {
+      "type": "number",
+      "description": "Index of the step in the pipeline"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "send_email",
+        "publish",
+        "spend",
+        "delete",
+        "external_write",
+        "execute_code",
+        "high_cost",
+        "critical_action"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "preview_data": {
+      "type": "string",
+      "description": "Preview content of the action"
+    },
+    "estimated_cost": {
+      "type": "number",
+      "description": "Cost of this specific action"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "revision_requested",
+        "auto_approved",
+        "expired"
+      ],
+      "default": "pending"
+    },
+    "agent_name": {
+      "type": "string"
+    },
+    "model_used": {
+      "type": "string"
+    },
+    "decided_by": {
+      "type": "string"
+    },
+    "decision_note": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "task_id",
+    "summary",
+    "action_type"
+  ]
+}

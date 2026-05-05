@@ -1,0 +1,25 @@
+{
+  "name": "EmailLead",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "description": "Visitor email address"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "landing_hero",
+        "landing_footer",
+        "pricing"
+      ],
+      "default": "landing_hero"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "email"
+  ]
+}
