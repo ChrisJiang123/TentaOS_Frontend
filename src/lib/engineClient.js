@@ -10,6 +10,43 @@ class TentaOSClient {
     this.connected = false;
     this.reconnectTimer = null;
     this.manualClose = false;
+    this.state = 'disconnected'; // disconnected | connecting | connected | reconnecting | failed
+    this.reconnectAttempt = 0;
+    this.nextRetryAt = null;
+    this.lastMessageAt = null;
+    this.lastHeartbeatAt = null;
+    this.lastError = null;
+  }
+
+  _setState(state, extra = {}) {
+    this.state = state;
+    this.connected = state === 'connected';
+    this.emit('connection_status', {
+      connected: this.connected,
+      state: this.state,
+      reconnect_attempt: this.reconnectAttempt,
+      next_retry_at: this.nextRetryAt,
+      last_message_at: this.lastMessageAt,
+      last_heartbeat_at: this.lastHeartbeatAt,
+      last_error: this.lastError,
+      ...extra,
+    });
+  }
+
+  _clearReconnectTimer() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
+
+  _computeBackoffMs() {
+    // Exponential backoff with jitter, bounded.
+    const base = 1000; // 1s
+    const max = 30000; // 30s
+    const exp = Math.min(max, Math.round(base * Math.pow(1.8, this.reconnectAttempt)));
+    const jitter = Math.round(exp * (0.2 * Math.random())); // up to +20%
+    return Math.min(max, exp + jitter);
   }
 
   connect() {
@@ -17,17 +54,25 @@ class TentaOSClient {
       return;
     }
     this.manualClose = false;
+    this._clearReconnectTimer();
+    this.nextRetryAt = null;
+    this._setState(this.reconnectAttempt > 0 ? 'reconnecting' : 'connecting');
     this.ws = new WebSocket(ENGINE_WS_URL);
 
     this.ws.onopen = () => {
-      this.connected = true;
-      this.emit("connection_status", { connected: true });
+      this.reconnectAttempt = 0;
+      this.lastError = null;
+      this._setState('connected');
     };
 
     this.ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         const eventType = data?.type || data?.event;
+        this.lastMessageAt = Date.now();
+        if (eventType === 'heartbeat' || eventType === 'ping' || data?.heartbeat) {
+          this.lastHeartbeatAt = this.lastMessageAt;
+        }
         if (eventType) {
           this.emit(eventType, data);
         }
@@ -37,24 +82,28 @@ class TentaOSClient {
     };
 
     this.ws.onclose = () => {
-      this.connected = false;
-      this.emit("connection_status", { connected: false });
       if (!this.manualClose) {
-        this.reconnectTimer = setTimeout(() => this.connect(), 3000);
+        const delay = this._computeBackoffMs();
+        this.reconnectAttempt += 1;
+        this.nextRetryAt = Date.now() + delay;
+        this._setState('reconnecting', { next_retry_in_ms: delay });
+        this.reconnectTimer = setTimeout(() => this.connect(), delay);
+      } else {
+        this._setState('disconnected');
       }
     };
 
     this.ws.onerror = (error) => {
+      this.lastError = String(error?.message || error || 'WebSocket error');
+      this._setState(this.connected ? 'connected' : 'failed');
       console.error("WS error:", error);
     };
   }
 
   disconnect() {
     this.manualClose = true;
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
+    this._clearReconnectTimer();
+    this.nextRetryAt = null;
     if (this.ws) {
       this.ws.close();
     }
@@ -128,6 +177,20 @@ class TentaOSClient {
 
   isConnected() {
     return this.connected;
+  }
+
+  getConnectionInfo() {
+    return {
+      connected: this.connected,
+      state: this.state,
+      reconnect_attempt: this.reconnectAttempt,
+      next_retry_at: this.nextRetryAt,
+      last_message_at: this.lastMessageAt,
+      last_heartbeat_at: this.lastHeartbeatAt,
+      last_error: this.lastError,
+      engine_url: ENGINE_BASE_URL,
+      ws_url: ENGINE_WS_URL,
+    };
   }
 }
 

@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { LanguageProvider } from '@/lib/LanguageContext';
@@ -17,6 +18,7 @@ import Agents from './pages/Agents';
 import Models from './pages/Models';
 import Billing from './pages/Billing';
 import Pricing from './pages/Pricing';
+import Diagnostics from './pages/Diagnostics';
 import AppLayout from './components/layout/AppLayout';
 import DocsLayout from './components/docs/DocsLayout';
 import QuickStart from './pages/docs/QuickStart';
@@ -90,6 +92,7 @@ const AuthenticatedApp = () => {
       <Route element={<AppLayout />}>
         <Route path="/Dashboard" element={<Dashboard />} />
         <Route path="/dashboard" element={<Navigate to="/Dashboard" replace />} />
+        <Route path="/diagnostics" element={<Diagnostics />} />
         <Route path="/TaskDetail" element={<TaskDetail />} />
         <Route path="/PipelineStudio" element={<PipelineStudio />} />
         <Route path="/Approvals" element={<Approvals />} />
@@ -113,6 +116,7 @@ function App() {
           <Router>
             <PublicRoutes />
           </Router>
+          <Analytics />
           <Toaster />
         </QueryClientProvider>
       </LanguageProvider>

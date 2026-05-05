@@ -182,6 +182,8 @@ export default function Dashboard() {
                 引擎健康：{health.status ?? '—'}
                 {health.browser != null && ` · 浏览器 ${String(health.browser)}`}
                 {health.active_tasks != null && ` · 进行中 ${health.active_tasks}`}
+                {health.pending_approvals != null && ` · 待审批 ${health.pending_approvals}`}
+                {health.ws_clients != null && ` · ws_clients ${health.ws_clients}`}
               </p>
             )}
           </div>
