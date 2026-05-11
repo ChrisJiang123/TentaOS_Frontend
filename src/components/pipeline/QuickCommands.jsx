@@ -1,6 +1,5 @@
 import React from 'react';
 import { Swords, FileText, Mail, Code2, Bug, Globe } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 const commands = [
   { cmd: '/compete', icon: Swords, label: '竞品分析', placeholder: '竞品名称', color: '#F59E0B', desc: '3步竞品深度分析' },

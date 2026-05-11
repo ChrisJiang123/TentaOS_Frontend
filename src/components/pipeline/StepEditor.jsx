@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Pencil, Check, X, Shield } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 const MODELS = [
   { id: 'google/gemini-2.5-flash', label: 'Gemini Flash', cost: '$', icon: '🔵' },

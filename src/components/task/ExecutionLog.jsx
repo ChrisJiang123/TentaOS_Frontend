@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Brain, Wrench, FileText, AlertCircle, Shield, ChevronDown, Clock, Filter, Search } from 'lucide-react';
+import { Brain, Wrench, FileText, AlertCircle, Shield, ChevronDown, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';

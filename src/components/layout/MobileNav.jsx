@@ -73,11 +73,11 @@ export default function MobileNav() {
                 className={cn(
                   "flex items-center gap-3 px-3 py-3 rounded-lg transition-all",
                   isActive
-                    ? "bg-[#00E5FF]/[0.08] text-white border border-[#00E5FF]/[0.15]"
+                    ? "bg-sky-500/[0.07] text-white border border-sky-400/15"
                     : "text-white/50 hover:text-white/80 hover:bg-white/[0.04] border border-transparent"
                 )}
               >
-                <item.icon className={cn("w-[18px] h-[18px]", isActive && "text-[#00E5FF]")} />
+                <item.icon className={cn("w-[18px] h-[18px]", isActive && "text-sky-400")} />
                 <span className="text-sm font-medium flex-1">{t(item.key)}</span>
                 {item.key === 'approvals' && pendingCount > 0 && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 min-w-[20px] text-center">{pendingCount}</span>

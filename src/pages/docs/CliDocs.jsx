@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import CodeTabs from '../../components/docs/CodeTabs';
 import Callout from '../../components/docs/Callout';

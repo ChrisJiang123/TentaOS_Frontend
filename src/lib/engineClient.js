@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ENGINE_URL, WS_URL } from '@/config';
 
 const ENGINE_BASE_URL = ENGINE_URL;

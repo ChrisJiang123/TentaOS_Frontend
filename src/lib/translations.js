@@ -2,7 +2,7 @@ const translations = {
   en: {
     // Sidebar
     dashboard: 'Dashboard',
-    pipeline: 'Pipeline',
+    pipeline: 'Cortex Pipeline',
     agents: 'Agents',
     approvals: 'Approvals',
     models: 'Models',
@@ -93,7 +93,7 @@ const translations = {
   zh: {
     // Sidebar
     dashboard: '控制台',
-    pipeline: '流水线',
+    pipeline: 'Cortex 流水线',
     agents: '智能体',
     approvals: '审批',
     models: '模型',

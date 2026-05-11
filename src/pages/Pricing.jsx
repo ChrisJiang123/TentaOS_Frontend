@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { Key, Cloud, Zap, Users } from 'lucide-react';
 import PricingCard from '../components/pricing/PricingCard';
 import { toast } from '@/components/ui/use-toast';
@@ -128,7 +127,7 @@ export default function Pricing() {
   };
 
   return (
-    <div className="min-h-screen p-6 lg:p-8">
+    <div data-testid="pricing-page" className="min-h-screen p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">

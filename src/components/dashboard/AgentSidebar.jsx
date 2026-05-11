@@ -1,6 +1,5 @@
 import React from 'react';
-import { Bot, Circle, Zap } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Bot, Zap } from 'lucide-react';
 
 export default function AgentSidebar({ agents = [] }) {
   const activeCount = agents.filter(a => a.is_active).length;

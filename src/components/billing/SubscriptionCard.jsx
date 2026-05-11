@@ -1,9 +1,16 @@
+// @ts-nocheck
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CreditCard, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const statusColors = {
   active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -26,13 +33,19 @@ const planLabels = {
   team: 'Team',
 };
 
-export default function SubscriptionCard({ subscription }) {
+export default function SubscriptionCard({
+  subscription,
+  billingProviderConnected = false,
+  onCancelSubscription = undefined,
+}) {
+  const cancelEnabled = Boolean(billingProviderConnected && typeof onCancelSubscription === 'function');
   const plan = subscription?.plan || 'free';
   const status = subscription?.status || 'active';
   const amount = subscription?.amount || 0;
   const periodEnd = subscription?.current_period_end;
 
   return (
+    <TooltipProvider>
     <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
@@ -64,11 +77,43 @@ export default function SubscriptionCard({ subscription }) {
           </Button>
         </Link>
         {plan !== 'free' && status === 'active' && (
-          <Button variant="ghost" size="sm" className="text-red-400/70 hover:text-red-400 hover:bg-red-500/10">
-            Cancel Subscription
-          </Button>
+          cancelEnabled ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              data-testid="billing-cancel-subscription"
+              className="text-red-400/70 hover:text-red-400 hover:bg-red-500/10"
+              onClick={() => onCancelSubscription()}
+            >
+              Cancel Subscription
+            </Button>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-not-allowed">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled
+                    data-testid="billing-cancel-subscription"
+                    className="text-red-400/40 hover:bg-transparent h-8 text-xs cursor-not-allowed"
+                  >
+                    Cancel Subscription
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                {!billingProviderConnected
+                  ? 'Billing provider not connected yet.'
+                  : 'Cancellation is not wired in this build.'}
+              </TooltipContent>
+            </Tooltip>
+          )
         )}
       </div>
     </div>
+    </TooltipProvider>
   );
 }

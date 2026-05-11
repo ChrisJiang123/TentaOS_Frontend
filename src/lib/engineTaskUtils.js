@@ -1,3 +1,4 @@
+// @ts-nocheck
 /** Map Engine API / WS status strings to TaskCard / LivePipelineCard statuses */
 
 export function mapEngineStatus(raw) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, CheckCircle2, XCircle, Clock, DollarSign, Cpu, ArrowRight, Eye } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, DollarSign, Cpu, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 

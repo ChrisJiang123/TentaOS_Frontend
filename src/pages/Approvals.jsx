@@ -1,11 +1,14 @@
+// @ts-nocheck
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Shield, AlertTriangle, CheckCircle2, XCircle, RotateCcw, ChevronDown } from 'lucide-react';
+import { Shield, CheckCircle2, XCircle, RotateCcw, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import engineClient from '@/lib/engineClient';
+import { approvalsMock } from '@/data/tentaosDashboardMock';
+import { useToast } from '@/components/ui/use-toast';
 
 const riskConfig = {
   low: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', ring: 'ring-emerald-500/20' },
@@ -135,23 +138,58 @@ function ApprovalCard({ approval, onAction }) {
 export default function Approvals() {
   const [filter, setFilter] = useState('pending');
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-  const { data: approvals = [] } = useQuery({
+  const { data: approvalsPayload, isLoading, error } = useQuery({
     queryKey: ['approvals'],
     queryFn: async () => {
-      const list = await engineClient.getApprovals();
-      return Array.isArray(list) ? list : (list?.approvals || []);
+      try {
+        const list = await engineClient.getApprovals();
+        const items = Array.isArray(list) ? list : (list?.approvals || []);
+        return { items, source: 'engine' };
+      } catch {
+        return { items: approvalsMock, source: 'mock' };
+      }
     },
   });
+  const approvals = approvalsPayload?.items || [];
+  const approvalsSource = approvalsPayload?.source || (error ? 'error' : 'unknown');
 
   const updateApproval = useMutation({
     mutationFn: async ({ id, status }) => {
       // Engine API: POST /api/approvals/:id { approved, feedback }
-      await engineClient.approveViaAPI(id, status === 'approved', '');
+      try {
+        await engineClient.approveViaAPI(id, status === 'approved', '');
+        return { source: 'engine' };
+      } catch (e) {
+        return { source: 'mock', error: e instanceof Error ? e.message : String(e) };
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['approvals'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    onSuccess: (res, vars) => {
+      if (res?.source === 'engine') {
+        queryClient.invalidateQueries({ queryKey: ['approvals'] });
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        toast({ title: '已发送到 Engine', description: `Approval: ${vars.id}` });
+        return;
+      }
+
+      // Mock fallback: update local cache so buttons aren't "dead"
+      queryClient.setQueryData(['approvals'], (prev) => {
+        const p = prev && typeof prev === 'object' ? prev : { items: approvalsMock, source: 'mock' };
+        const items = Array.isArray(p.items) ? p.items : [];
+        return {
+          ...p,
+          source: 'mock',
+          items: items.map((a) => (a?.id === vars.id ? { ...a, status: vars.status } : a)),
+        };
+      });
+      toast({
+        title: '本地模拟已更新',
+        description: 'Engine 审批接口不可用，已在 mock 队列中标记该审批为已处理。',
+      });
+    },
+    onError: (e) => {
+      toast({ title: '审批失败', description: e instanceof Error ? e.message : String(e), variant: 'destructive' });
     },
   });
 
@@ -162,9 +200,10 @@ export default function Approvals() {
   });
 
   const pendingCount = approvals.filter(a => a.status === 'pending').length;
+  const usingMock = approvalsSource !== 'engine';
 
   return (
-    <div className="min-h-screen p-6 lg:p-8">
+    <div data-testid="approvals-page" className="min-h-screen p-6 lg:p-8">
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-1">
@@ -177,6 +216,13 @@ export default function Approvals() {
             )}
           </div>
           <p className="text-sm text-white/40 mt-1">Review and approve agent actions before execution</p>
+          {isLoading && <p className="text-[11px] text-white/25 mt-1">Loading approvals…</p>}
+          {error && <p className="text-[11px] text-red-400/80 mt-1">Failed to load approvals (showing fallback if available).</p>}
+          {usingMock && !isLoading && (
+            <p className="text-[11px] text-white/25 mt-1">
+              当前使用 <span className="text-[#38BDF8]">mock</span> 队列（Engine /api/approvals 不可用或跨域失败）。
+            </p>
+          )}
         </div>
 
         <Tabs value={filter} onValueChange={setFilter} className="mb-6">

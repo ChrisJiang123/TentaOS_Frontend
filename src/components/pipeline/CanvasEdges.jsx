@@ -24,12 +24,12 @@ export default function CanvasEdges({ edges, nodes }) {
           <g key={edge.id}>
             <path
               d={`M ${sx} ${sy} C ${midX} ${sy}, ${midX} ${ty}, ${tx} ${ty}`}
-              stroke="rgba(255,255,255,0.08)"
+              stroke="rgba(148, 163, 184, 0.14)"
               strokeWidth="2"
               fill="none"
             />
             {/* Arrow */}
-            <circle cx={tx} cy={ty} r="3" fill="rgba(255,255,255,0.15)" />
+            <circle cx={tx} cy={ty} r="3" fill="rgba(148, 163, 184, 0.2)" />
           </g>
         );
       })}

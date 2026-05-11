@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import CodeBlock from './CodeBlock';
 
 export default function CodeTabs({ tabs }) {
   const [active, setActive] = useState(0);

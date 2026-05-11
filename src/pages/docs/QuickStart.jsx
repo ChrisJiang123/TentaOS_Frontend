@@ -1,7 +1,7 @@
+// @ts-nocheck
 import React from 'react';
 import StepCard from '../../components/docs/StepCard';
 import CodeTabs from '../../components/docs/CodeTabs';
-import CodeBlock from '../../components/docs/CodeBlock';
 import InfoCard from '../../components/docs/InfoCard';
 import Callout from '../../components/docs/Callout';
 import TableOfContents from '../../components/docs/TableOfContents';

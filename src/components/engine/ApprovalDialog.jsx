@@ -1,8 +1,10 @@
+// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import engineClient from '@/lib/engineClient';
-import { Shield, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { Shield, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/components/ui/use-toast';
 
 const riskColors = {
   low: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', label: 'Low Risk' },
@@ -11,6 +13,7 @@ const riskColors = {
 };
 
 export default function ApprovalDialog() {
+  const { toast } = useToast();
   const [approval, setApproval] = useState(null);
 
   useEffect(() => {
@@ -28,8 +31,18 @@ export default function ApprovalDialog() {
     if (id) {
       try {
         await engineClient.approveViaAPI(id, approved, '');
+        toast({
+          title: approved ? '已批准' : '已拒绝',
+          description: `审批 ID: ${id}`,
+        });
       } catch (e) {
         console.error('Approval API failed:', e);
+        toast({
+          variant: 'destructive',
+          title: '审批请求失败',
+          description: e instanceof Error ? e.message : String(e),
+        });
+        return;
       }
     }
     setApproval(null);

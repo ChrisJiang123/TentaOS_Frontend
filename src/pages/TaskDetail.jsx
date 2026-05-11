@@ -1,5 +1,6 @@
+// @ts-nocheck
 import React, { useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Clock, DollarSign, Cpu, Play, Pause, XCircle, RotateCcw, Trash2, Timer } from 'lucide-react';

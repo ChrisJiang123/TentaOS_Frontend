@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Loader2, Clock, AlertTriangle, XCircle, ArrowRight, Shield, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Loader2, Clock, XCircle, ArrowRight, Shield, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 

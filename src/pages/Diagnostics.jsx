@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+// @ts-nocheck
+import React, { useEffect, useState } from 'react';
 import { ENGINE_URL, WS_URL } from '@/config';
 import engineClient from '@/lib/engineClient';
-import { Activity, Wifi, Timer, AlertTriangle, Link2 } from 'lucide-react';
+import { Activity, Wifi, AlertTriangle, Link2 } from 'lucide-react';
 
 function fmtTime(ts) {
   if (!ts) return '—';

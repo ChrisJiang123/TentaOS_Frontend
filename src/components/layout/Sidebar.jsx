@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  LayoutDashboard, ListTodo, Workflow, Users, Shield, 
+  LayoutDashboard, Workflow, Users, Shield, 
   Cpu, ChevronLeft, ChevronRight, Receipt,
   LogOut, DollarSign, FileText, Download, Zap, Settings2
 } from 'lucide-react';
@@ -42,7 +42,7 @@ export default function Sidebar() {
 
   return (
     <div className={cn(
-      "h-screen bg-[#0A0E1A] border-r border-[#00E5FF]/[0.08] flex flex-col transition-all duration-300 sticky top-0",
+      "h-screen bg-[#0F141F] border-r border-slate-500/10 flex flex-col transition-all duration-300 sticky top-0",
       collapsed ? "w-[68px]" : "w-[240px]"
     )}>
       {/* Logo */}
@@ -64,11 +64,11 @@ export default function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                 isActive 
-                  ? "bg-[#00E5FF]/[0.08] text-white border border-[#00E5FF]/[0.15]" 
+                  ? "bg-sky-500/[0.07] text-white border border-sky-400/15" 
                   : "text-white/50 hover:text-white/80 hover:bg-white/[0.04] border border-transparent"
               )}
             >
-              <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", isActive && "text-[#00E5FF]")} />
+              <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", isActive && "text-sky-400")} />
               {!collapsed && (
                 <span className="text-sm font-medium truncate">{t(item.key)}</span>
               )}
@@ -81,7 +81,7 @@ export default function Sidebar() {
                 </span>
               )}
               {isActive && !collapsed && !item.badgeKey && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00E5FF]" />
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sky-400/80" />
               )}
             </Link>
           );

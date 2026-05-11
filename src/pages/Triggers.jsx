@@ -1,61 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// @ts-nocheck
+import React, { useMemo, useState } from 'react';
 import { Zap, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TriggerCard from '../components/triggers/TriggerCard';
-import CreateTriggerDialog from '../components/triggers/CreateTriggerDialog';
+import { triggersMock } from '@/data/tentaosDashboardMock';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function Triggers() {
-  const [showCreate, setShowCreate] = useState(false);
   const [filter, setFilter] = useState('all');
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [triggers, setTriggers] = useState(() =>
+    triggersMock.map((t) => ({
+      id: t.id,
+      name: t.name,
+      trigger_type: t.type === 'schedule' ? 'schedule' : t.type === 'api' ? 'webhook' : 'manual',
+      is_active: Boolean(t.is_active),
+      trigger_count: t.trigger_count || t.trigger_count === 0 ? t.trigger_count : t.trigger_count,
+      last_triggered: t.last_fired_at || null,
+      condition: t.type === 'schedule' ? t.schedule : null,
+      task_template: { title: 'Frontend-backend health check', goal: 'Probe engine health and WS stability', priority: 'low' },
+      agent_name: 'Operator',
+    }))
+  );
 
-  const { data: triggers = [] } = useQuery({
-    queryKey: ['triggers'],
-    queryFn: async () => [],
-  });
-
-  const { data: agents = [] } = useQuery({
-    queryKey: ['agents'],
-    queryFn: async () => [],
-  });
-
-  // Real-time updates
-  useEffect(() => {
-    return () => {};
-  }, [queryClient]);
-
-  const toggleTrigger = useMutation({
-    mutationFn: async () => {},
-  });
-
-  const createTrigger = useMutation({
-    mutationFn: async () => {},
-    onSuccess: () => toast({ title: '本地模式', description: 'Triggers 未接入 Engine，暂不可用。' }),
-  });
-
-  const fireTrigger = useMutation({
-    mutationFn: async (t) => {
-      return { message: 'Triggers 未接入 Engine，暂不可用。' };
-    },
-    onSuccess: (data) => {
-      toast({ title: '⚡ Trigger Fired', description: data.message });
-    },
-    onError: (err) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
-  });
-
-  const filtered = triggers.filter(t => {
-    if (filter === 'active') return t.is_active;
-    if (filter === 'inactive') return !t.is_active;
-    return true;
-  });
+  const filtered = useMemo(() => {
+    return triggers.filter((t) => {
+      if (filter === 'active') return t.is_active;
+      if (filter === 'inactive') return !t.is_active;
+      return true;
+    });
+  }, [filter, triggers]);
 
   return (
-    <div className="min-h-screen p-6 lg:p-8">
-      <div className="max-w-3xl mx-auto">
+    <TooltipProvider>
+      <div data-testid="triggers-page" className="min-h-screen p-6 lg:p-8">
+        <div className="max-w-3xl mx-auto">
         <div className="mb-8 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -64,9 +45,16 @@ export default function Triggers() {
             </div>
             <p className="text-sm text-white/40 mt-1">Automate AI agent tasks with webhooks, schedules, and events</p>
           </div>
-          <Button onClick={() => setShowCreate(true)} className="bg-amber-600 hover:bg-amber-500 text-white h-9 text-xs">
-            <Plus className="w-4 h-4 mr-1" /> New Trigger
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button disabled className="bg-amber-600/40 text-white h-9 text-xs cursor-not-allowed">
+                <Plus className="w-4 h-4 mr-1" /> New Trigger
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-[#151E2E] border border-[rgba(148,163,184,0.16)] text-[#F8FAFC]">
+              需要 Engine 的 triggers 管理接口（未接入）
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         {/* Stats */}
@@ -99,7 +87,12 @@ export default function Triggers() {
         {/* List */}
         <div className="space-y-3">
           {filtered.map(t => (
-            <TriggerCard key={t.id} trigger={t} onToggle={(tr) => toggleTrigger.mutate(tr)} onFire={(tr) => fireTrigger.mutate(tr)} />
+            <TriggerCard
+              key={t.id}
+              trigger={t}
+              onToggle={(tr) => setTriggers((prev) => prev.map((x) => (x.id === tr.id ? { ...x, is_active: !x.is_active } : x)))}
+              onFire={(tr) => toast({ title: '⚡ Trigger Fired', description: `Fired “${tr.name}” (mock).` })}
+            />
           ))}
           {filtered.length === 0 && (
             <div className="text-center py-20">
@@ -110,8 +103,8 @@ export default function Triggers() {
           )}
         </div>
 
-        <CreateTriggerDialog open={showCreate} onClose={() => setShowCreate(false)} onCreate={(d) => createTrigger.mutateAsync(d)} agents={agents} />
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Coins, ShoppingCart, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, AlertTriangle } from 'lucide-react';
 
 
 export default function CreditBalance({ subscription, onBuyCredits }) {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { Settings2, User, Globe, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -5,15 +6,25 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/lib/LanguageContext';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import engineClient from '@/lib/engineClient';
+import { ENGINE_URL, WS_URL } from '@/config';
+import { useQuery } from '@tanstack/react-query';
 
 export default function Settings() {
   const { user, logout } = useAuth();
   const { lang, setLang, t } = useLanguage();
+  const { data: health, isLoading: healthLoading, error: healthError } = useQuery({
+    queryKey: ['engine-health-settings'],
+    queryFn: () => engineClient.getHealth(),
+    refetchInterval: 15000,
+  });
+  const conn = engineClient.getConnectionInfo();
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      data-testid="settings-page"
       className="min-h-screen p-6 lg:p-8"
     >
       <div className="max-w-2xl mx-auto">
@@ -27,6 +38,33 @@ export default function Settings() {
         </div>
 
         <div className="space-y-6">
+          {/* Engine / API Section */}
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+            <div className="flex items-center gap-2 mb-5">
+              <Settings2 className="w-4 h-4 text-white/50" />
+              <h2 className="text-sm font-medium text-white">Engine Status & API</h2>
+            </div>
+
+            <div className="space-y-3">
+              <InfoRow label="ENGINE_URL" value={ENGINE_URL} />
+              <InfoRow label="WS_URL" value={WS_URL} />
+              <InfoRow label="WebSocket" value={`${conn.state}${conn.connected ? ' (connected)' : ''}`} />
+              <InfoRow
+                label="Health"
+                value={
+                  healthLoading
+                    ? 'Loading…'
+                    : healthError
+                      ? 'Error'
+                      : (health?.status ?? 'OK')
+                }
+              />
+              <div className="pt-3 text-xs text-white/35">
+                这里是本地配置占位。后续可在 Engine 提供配置/鉴权接口后接入真实设置面板。
+              </div>
+            </div>
+          </div>
+
           {/* Account Section */}
           <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-5">

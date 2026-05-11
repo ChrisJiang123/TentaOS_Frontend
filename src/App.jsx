@@ -92,9 +92,17 @@ const AuthenticatedApp = () => {
       <Route element={<AppLayout />}>
         <Route path="/Dashboard" element={<Dashboard />} />
         <Route path="/dashboard" element={<Navigate to="/Dashboard" replace />} />
+        <Route path="/agents" element={<Navigate to="/Agents" replace />} />
+        <Route path="/approvals" element={<Navigate to="/Approvals" replace />} />
+        <Route path="/models" element={<Navigate to="/Models" replace />} />
+        <Route path="/pricing" element={<Navigate to="/Pricing" replace />} />
+        <Route path="/billing" element={<Navigate to="/Billing" replace />} />
+        <Route path="/triggers" element={<Navigate to="/Triggers" replace />} />
+        <Route path="/settings" element={<Navigate to="/Settings" replace />} />
         <Route path="/diagnostics" element={<Diagnostics />} />
         <Route path="/TaskDetail" element={<TaskDetail />} />
         <Route path="/PipelineStudio" element={<PipelineStudio />} />
+        <Route path="/pipeline" element={<Navigate to="/PipelineStudio" replace />} />
         <Route path="/Approvals" element={<Approvals />} />
         <Route path="/Agents" element={<Agents />} />
         <Route path="/Models" element={<Models />} />

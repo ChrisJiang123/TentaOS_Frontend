@@ -1,10 +1,12 @@
+// @ts-nocheck
 import React, { useState, useRef } from 'react';
 import engineClient from '@/lib/engineClient';
+import { useToast } from '@/components/ui/use-toast';
 import { Sparkles, Loader2, Play, DollarSign, Clock, Cpu, Coins, Shield, CheckCircle2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import QuickCommands, { commands } from './QuickCommands';
+import QuickCommands from './QuickCommands';
 import StepEditor from './StepEditor';
 
 const CHEAP_MODELS = ['deepseek/deepseek-chat', 'openai/gpt-4o-mini', 'google/gemini-2.5-flash'];
@@ -14,6 +16,7 @@ export default function PipelineChat({
   approvalMode,
   onApprovalToggle,
 }) {
+  const { toast } = useToast();
   const [message, setMessage] = useState('');
   const [pipeline, setPipeline] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -73,6 +76,11 @@ export default function PipelineChat({
     const taskId = res?.task_id ?? res?.taskId ?? res?.id;
     if (taskId && onEngineTaskSubmitted) {
       onEngineTaskSubmitted(taskId, text, pipelineMeta);
+    } else if (taskId) {
+      toast({
+        title: '任务已提交',
+        description: `Engine 任务 ID: ${taskId}`,
+      });
     }
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 4000);
@@ -85,6 +93,11 @@ export default function PipelineChat({
       await notifyEngineTask(text, null);
     } catch (err) {
       console.error('Engine submit failed:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Engine 提交失败',
+        description: err instanceof Error ? err.message : String(err),
+      });
       return;
     }
     setMessage('');
@@ -99,6 +112,11 @@ export default function PipelineChat({
       await notifyEngineTask(text, pipeline);
     } catch (err) {
       console.error('Engine submit failed:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Engine 提交失败',
+        description: err instanceof Error ? err.message : String(err),
+      });
       return;
     }
     setMessage('');

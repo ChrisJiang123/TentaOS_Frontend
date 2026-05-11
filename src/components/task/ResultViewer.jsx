@@ -3,7 +3,6 @@ import ReactMarkdown from 'react-markdown';
 import { Copy, Download, FileText, ChevronDown, ChevronUp, Check, Mail, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
-import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function StepOutput({ step, index }) {

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Rocket, Workflow, Bot, Cpu, ArrowRight, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 

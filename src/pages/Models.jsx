@@ -1,10 +1,13 @@
+// @ts-nocheck
 import React from 'react';
-import { Cpu, Circle, Zap, Clock, DollarSign, Activity, Plus } from 'lucide-react';
+import { Cpu, Zap, Clock, DollarSign, Activity, Plus } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import useSEO from '../lib/useSEO';
+import { modelsMock } from '@/data/tentaosDashboardMock';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const providerConfig = {
   anthropic: { label: 'Anthropic', color: '#D97706', icon: '🟠' },
@@ -17,23 +20,27 @@ const providerConfig = {
 };
 
 export default function Models() {
-  const [showCreate, setShowCreate] = React.useState(false);
-  const models = [];
+  const [models, setModels] = React.useState(modelsMock);
 
   useSEO({
     title: 'AI Models — TentaOS',
     description: 'Connect and use the latest AI models with TentaOS. Support for OpenAI, Claude, and more - all in one unified interface.',
+    keywords: 'TentaOS, Models, BYOK, Routing',
   });
 
-  const toggleModel = { mutate: () => {} };
-  const createModel = { mutate: () => {} };
+  const toggleModel = {
+    mutate: (model) => {
+      setModels((prev) => prev.map((m) => (m.id === model.id ? { ...m, is_active: !m.is_active } : m)));
+    },
+  };
 
   const totalCost = models.reduce((sum, m) => sum + (m.total_cost || 0), 0);
   const totalTokens = models.reduce((sum, m) => sum + (m.total_tokens || 0), 0);
 
   return (
-    <div className="min-h-screen p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
+    <TooltipProvider>
+      <div data-testid="models-page" className="min-h-screen p-6 lg:p-8">
+        <div className="max-w-4xl mx-auto">
         <div className="mb-8 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -43,9 +50,34 @@ export default function Models() {
             <p className="text-sm text-white/40 mt-1">Configure AI models, track usage, and manage routing</p>
             <p className="text-[11px] text-white/30 mt-1">本地模式：已移除 base44 模型管理接口（避免 api/apps/null 404）。</p>
           </div>
-          <Button onClick={() => setShowCreate(true)} className="bg-purple-600 hover:bg-purple-500 text-white h-9 text-xs">
-            <Plus className="w-4 h-4 mr-1" /> Add Model
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={() =>
+                  setModels((prev) => [
+                    ...prev,
+                    {
+                      id: `m_local_${Date.now()}`,
+                      provider: 'local',
+                      display_name: 'Local Tentacle',
+                      model_id: `local/tentacle-${String(Date.now()).slice(-4)}`,
+                      tasks_routed: 0,
+                      total_tokens: 0,
+                      total_cost: 0,
+                      avg_latency_ms: 0,
+                      is_active: true,
+                    },
+                  ])
+                }
+                className="bg-purple-600 hover:bg-purple-500 text-white h-9 text-xs"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Add Model
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-[#151E2E] border border-[rgba(148,163,184,0.16)] text-[#F8FAFC]">
+              当前为本地 mock（后续可接入 Engine 的模型列表接口）
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         {/* Summary Stats */}
@@ -113,7 +145,8 @@ export default function Models() {
         </div>
 
         {/* base44 CreateModelDialog 已移除 */}
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, CheckCircle2, Clock, DollarSign, XCircle, Zap, Shield } from 'lucide-react';
+import { Activity, CheckCircle2, DollarSign, XCircle, Zap, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Cpu, Zap, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
+import { Cpu, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 

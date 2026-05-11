@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Receipt } from 'lucide-react';
 
 import SubscriptionCard from '../components/billing/SubscriptionCard';
@@ -11,7 +11,7 @@ export default function Billing() {
   const handleRefresh = () => {};
 
   return (
-    <div className="min-h-screen p-6 lg:p-8">
+    <div data-testid="billing-page" className="min-h-screen p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
@@ -26,7 +26,7 @@ export default function Billing() {
         <div className="space-y-6">
           {/* Subscription + Credits row */}
           <div className={`grid gap-6 ${isHosted ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
-            <SubscriptionCard subscription={subscription} />
+            <SubscriptionCard subscription={subscription} billingProviderConnected={false} />
           </div>
 
           {/* Cost Summary */}

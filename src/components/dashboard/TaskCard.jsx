@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Loader2, Clock, AlertTriangle, Pause, XCircle, ArrowRight, Bot, Shield } from 'lucide-react';
+import { CheckCircle2, Loader2, Clock, Pause, XCircle, ArrowRight, Bot, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';

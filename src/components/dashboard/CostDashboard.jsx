@@ -1,6 +1,5 @@
 import React from 'react';
-import { DollarSign, TrendingDown, Cpu, BarChart3 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { TrendingDown, BarChart3 } from 'lucide-react';
 
 export default function CostDashboard({ tasks = [] }) {
   const today = new Date();

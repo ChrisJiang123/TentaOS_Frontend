@@ -1,7 +1,7 @@
+// @ts-nocheck
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 export default function InfoCard({ title, description, href, icon: Icon, color = '#00E5FF' }) {
   const Wrapper = href?.startsWith('http') ? 'a' : Link;

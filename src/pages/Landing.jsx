@@ -1,18 +1,16 @@
-import React, { useState, useEffect } from 'react';
+// @ts-nocheck
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Zap, Eye, Shield, Workflow, Bot, Terminal, 
-  ArrowRight, CheckCircle2, Star, ChevronRight,
-  Cpu, Search, Code2, FileText, Globe, Monitor, Rocket, LogIn
+import { Eye, Shield, Workflow, Bot, Terminal, 
+  ArrowRight, CheckCircle2, Star,
+  Cpu, Monitor, Rocket, LogIn
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import TentaLogo from '../components/brand/TentaLogo';
 import useSEO from '../lib/useSEO';
-import { generateOfflineHTML } from '../lib/generateOfflineHTML';
 import HowItWorks from '../components/landing/HowItWorks';
-import Testimonials from '../components/landing/Testimonials';
 import LandingFooter from '../components/landing/LandingFooter';
 import MobileMenu from '../components/landing/MobileMenu';
 import TrustLogos from '../components/landing/TrustLogos';

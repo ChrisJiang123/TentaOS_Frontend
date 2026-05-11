@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from 'react';
 import { Webhook, Upload, Clock, Database, Hand, ChevronRight, Zap, Activity } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';

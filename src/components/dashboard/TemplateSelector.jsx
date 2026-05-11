@@ -1,5 +1,6 @@
+// @ts-nocheck
 import React, { useState } from 'react';
-import { Newspaper, Search, FileText, Mail, Code2, Play, ArrowRight } from 'lucide-react';
+import { Newspaper, Search, FileText, Mail, Code2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';

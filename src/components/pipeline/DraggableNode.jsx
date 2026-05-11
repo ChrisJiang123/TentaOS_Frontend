@@ -48,10 +48,13 @@ export default function DraggableNode({ node, onMove, onSelect, isSelected, onDe
   return (
     <div
       ref={dragRef}
+      data-testid="pipeline-node-card"
+      data-node-id={node.id}
+      data-node-type={node.type}
       className={cn(
-        "absolute bg-[#0D0D15] border rounded-xl p-4 min-w-[180px] transition-shadow select-none group",
-        dragging ? "shadow-lg shadow-blue-500/10 z-50 cursor-grabbing" : "cursor-grab",
-        isSelected ? "border-blue-500/40 ring-1 ring-blue-500/20" : "border-white/[0.08] hover:border-white/[0.15]"
+        "absolute bg-[#1A2436] border border-slate-500/12 rounded-xl p-4 min-w-[180px] transition-shadow select-none group",
+        dragging ? "shadow-md shadow-black/20 z-50 cursor-grabbing" : "cursor-grab",
+        isSelected ? "border-sky-400/35 ring-1 ring-sky-400/10" : "border-slate-500/10 hover:border-slate-500/20"
       )}
       style={{ left: x, top: y }}
       onMouseDown={(e) => {

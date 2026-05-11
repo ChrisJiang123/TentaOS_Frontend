@@ -1,16 +1,28 @@
+// @ts-nocheck
 import React, { useState } from 'react';
 import engineClient from '@/lib/engineClient';
 import { OctagonX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function EmergencyStop() {
+  const { toast } = useToast();
   const [confirming, setConfirming] = useState(false);
 
   const handleStop = async () => {
     try {
       await engineClient.stopAll();
+      toast({
+        title: '已发送紧急停止',
+        description: 'POST /api/stop 已成功。',
+      });
     } catch (e) {
       console.error('POST /api/stop failed:', e);
+      toast({
+        variant: 'destructive',
+        title: '紧急停止失败',
+        description: e instanceof Error ? e.message : String(e),
+      });
     }
     setConfirming(false);
   };

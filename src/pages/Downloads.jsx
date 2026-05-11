@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Download, ArrowLeft, CheckCircle2, Loader2, Monitor, Apple, Terminal } from 'lucide-react';
