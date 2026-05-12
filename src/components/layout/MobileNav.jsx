@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Workflow, Users, Shield, 
@@ -10,6 +10,7 @@ import TentaLogo from '../brand/TentaLogo';
 import { useLanguage } from '@/lib/LanguageContext';
 import engineClient from '@/lib/engineClient';
 import { useAuth } from '@/lib/AuthContext';
+import { fetchBillingMe } from '@/lib/billingAccountApi';
 
 const navKeys = [
   { path: '/Dashboard', icon: LayoutDashboard, key: 'dashboard' },
@@ -29,6 +30,18 @@ export default function MobileNav() {
   const { t } = useLanguage();
   const { logout } = useAuth();
 
+  const billing = useQuery({
+    queryKey: ['billing-me', 'mobile-topbar'],
+    queryFn: () => fetchBillingMe({ timeoutMs: 8000 }),
+    retry: 0,
+    staleTime: 30_000,
+  });
+  const top = useMemo(() => {
+    const status = billing.data?.status ?? '';
+    const credits = billing.data?.credits_balance;
+    return { status: String(status || ''), credits: credits == null ? null : Number(credits) };
+  }, [billing.data]);
+
   const { data: approvals = [] } = useQuery({
     queryKey: ['approvals-badge-mobile'],
     queryFn: async () => {
@@ -43,7 +56,14 @@ export default function MobileNav() {
     <>
       {/* Top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-[#0A0E1A]/95 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between px-4">
-        <TentaLogo size="sm" />
+        <div className="flex items-center gap-3 min-w-0">
+          <TentaLogo size="sm" />
+          <div className="flex items-center gap-2 text-[11px] text-white/45 min-w-0">
+            {top.status && <span className="truncate">Status: <span className="text-white/70">{top.status}</span></span>}
+            {top.credits != null && <span className="whitespace-nowrap">· {top.credits.toLocaleString()} cr</span>}
+            {billing.isError && <span className="text-amber-300/80">· Billing 未接入</span>}
+          </div>
+        </div>
         <button
           onClick={() => setOpen(!open)}
           className="w-9 h-9 flex items-center justify-center rounded-lg text-white/60 hover:bg-white/[0.06]"

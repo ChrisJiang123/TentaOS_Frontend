@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Workflow, Users, Shield, 
@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/lib/LanguageContext';
 import engineClient from '@/lib/engineClient';
 import { useAuth } from '@/lib/AuthContext';
+import { fetchBillingMe, fetchUserMe } from '@/lib/billingAccountApi';
 
 const navKeys = [
   { path: '/Dashboard', icon: LayoutDashboard, key: 'dashboard' },
@@ -29,6 +30,30 @@ export default function Sidebar() {
   const location = useLocation();
   const { t } = useLanguage();
   const { logout } = useAuth();
+
+  const me = useQuery({
+    queryKey: ['users-me', 'sidebar'],
+    queryFn: () => fetchUserMe({ timeoutMs: 8000 }),
+    retry: 0,
+    staleTime: 30_000,
+  });
+  const billing = useQuery({
+    queryKey: ['billing-me', 'sidebar'],
+    queryFn: () => fetchBillingMe({ timeoutMs: 8000 }),
+    retry: 0,
+    staleTime: 30_000,
+  });
+  const account = useMemo(() => {
+    const email = me.data?.email || me.data?.name || '';
+    const status = billing.data?.status ?? '—';
+    const credits = billing.data?.credits_balance;
+    return {
+      email,
+      status: String(status),
+      credits: credits == null ? null : Number(credits),
+      plan: String(billing.data?.plan ?? billing.data?.tier ?? 'free'),
+    };
+  }, [me.data, billing.data]);
 
   const { data: approvals = [] } = useQuery({
     queryKey: ['approvals-badge'],
@@ -90,6 +115,39 @@ export default function Sidebar() {
 
       {/* Bottom */}
       <div className="py-3 px-2 border-t border-white/[0.06] space-y-1">
+        <div className={cn("px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] mb-2", collapsed && "px-2")}>
+          {!collapsed ? (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[11px] text-white/35">Account</p>
+                  <p className="text-xs text-white/75 truncate">{account.email || '未登录/匿名'}</p>
+                </div>
+                <Link
+                  to="/pricing"
+                  className="text-[11px] px-2 py-1 rounded-md bg-[#00E5FF] text-[#06060B] hover:bg-[#00E5FF]/90 transition-colors"
+                >
+                  Upgrade
+                </Link>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-white/45">
+                <span>Status: <span className="text-white/75">{account.status}</span></span>
+                {account.credits != null && (
+                  <span className="whitespace-nowrap">· Credits: <span className="text-white/75">{account.credits.toLocaleString()}</span></span>
+                )}
+              </div>
+              {(me.isError || billing.isError) && (
+                <p className="mt-2 text-[11px] text-amber-300/80">
+                  Billing 未连接或暂不可用
+                </p>
+              )}
+            </>
+          ) : (
+            <Link to="/pricing" className="block w-full text-center text-[10px] text-white/60 hover:text-white/80">
+              $
+            </Link>
+          )}
+        </div>
         <Link
           to="/Downloads"
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/40 hover:text-[#00E5FF] hover:bg-white/[0.04] transition-all w-full"

@@ -33,6 +33,14 @@ import CliDocs from './pages/docs/CliDocs';
 import AuthDocs from './pages/docs/AuthDocs';
 import Triggers from './pages/Triggers';
 import Settings from './pages/Settings';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import Refund from './pages/Refund';
+import Contact from './pages/Contact';
+import Support from './pages/Support';
+import PublicPricing from './pages/PublicPricing';
+import BillingSuccess from './pages/BillingSuccess';
+import BillingCancel from './pages/BillingCancel';
 
 /** One top-level <Routes> so layout + app pages match on hard refresh (nested <Routes> under splat breaks /Agents, etc.). */
 function AppRoutes() {
@@ -62,6 +70,14 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to="/Landing" replace />} />
       <Route path="/Landing" element={<Landing />} />
+      <Route path="/pricing" caseSensitive element={<PublicPricing />} />
+      <Route path="/billing/success" element={<BillingSuccess />} />
+      <Route path="/billing/cancel" element={<BillingCancel />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/refund" element={<Refund />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/support" element={<Support />} />
       <Route path="/Downloads" element={<Downloads />} />
       <Route path="/Docs" element={<DocsLayout />}>
         <Route index element={<QuickStart />} />
@@ -98,7 +114,6 @@ function AppRoutes() {
         <Route path="/agents" element={<Navigate to="/Agents" replace />} />
         <Route path="/approvals" element={<Navigate to="/Approvals" replace />} />
         <Route path="/models" element={<Navigate to="/Models" replace />} />
-        <Route path="/pricing" element={<Navigate to="/Pricing" replace />} />
         <Route path="/billing" element={<Navigate to="/Billing" replace />} />
         <Route path="/triggers" element={<Navigate to="/Triggers" replace />} />
         <Route path="/settings" element={<Navigate to="/Settings" replace />} />

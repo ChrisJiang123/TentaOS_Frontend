@@ -107,23 +107,15 @@ export default function Pricing() {
   }, []);
 
   const handleSelect = async (planId) => {
+    // 内部 /Pricing 页面仅用于引导：真实结账入口在公开 /pricing
     if (planId === 'free') {
-      toast({ title: 'You are on the Free plan', description: 'Enjoy your free trial credits!' });
+      toast({ title: 'Free / Beta', description: '你可以先使用演示额度探索功能。' });
       return;
     }
-
-    const plan = plans.find(p => p.id === planId);
-    if (!plan?.paddlePlan) return;
-
-    setLoading(planId);
-    try {
-      // base44 Paddle checkout 已移除：保留页面展示，不触发任何后端调用
-      toast({ title: '本地模式', description: '计费/订阅功能未接入 Engine，暂不可用。' });
-    } catch (err) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    } finally {
-      setLoading(null);
-    }
+    toast({
+      title: '请前往公开 Pricing',
+      description: '结账入口在 /pricing（Creem），本页不直接发起支付。',
+    });
   };
 
   return (

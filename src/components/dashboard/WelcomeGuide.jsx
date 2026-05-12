@@ -1,5 +1,5 @@
 import React from 'react';
-import { Rocket, Workflow, Bot, Cpu, ArrowRight, Sparkles } from 'lucide-react';
+import { Rocket, Activity, Plug, Workflow, Cpu, ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -7,29 +7,43 @@ const steps = [
   {
     icon: Sparkles,
     color: '#3B82F6',
-    title: 'Launch Your First Task',
-    desc: 'Type a goal above and let AI agents handle the rest',
+    title: '欢迎来到 TentaOS',
+    desc: '你可以先用演示额度探索功能，再连接本地 Engine 开始真实任务。',
   },
   {
-    icon: Workflow,
-    color: '#8B5CF6',
-    title: 'Build a Pipeline',
-    desc: 'Drag & drop agents into custom workflows',
-    link: '/PipelineStudio',
-  },
-  {
-    icon: Bot,
+    icon: Activity,
     color: '#10B981',
-    title: 'Configure Agents',
-    desc: 'Set permissions, models, and tools for each agent',
-    link: '/Agents',
+    title: '从健康检查开始',
+    desc: '先查看部署/引擎健康状态，确认本地 Engine 已连接。',
+    link: '/diagnostics',
+  },
+  {
+    icon: Plug,
+    color: '#06B6D4',
+    title: '连接本地 Engine',
+    desc: '未连接时会以演示/Mock 模式运行（不会伪造付费状态）。',
+    link: '/Settings',
   },
   {
     icon: Cpu,
     color: '#06B6D4',
-    title: 'Add Your Models',
-    desc: 'Bring your own keys or use TentaOS hosted credits',
-    link: '/Models',
+    title: '查看示例 Cortex Trace',
+    desc: '示例数据会明确标注为 Sample，用于演示与上手。',
+    link: '/Dashboard',
+  },
+  {
+    icon: Workflow,
+    color: '#8B5CF6',
+    title: '探索 Tentacle Runtime',
+    desc: '体验 Pipeline Studio 与工作流编排。',
+    link: '/PipelineStudio',
+  },
+  {
+    icon: Rocket,
+    color: '#3B82F6',
+    title: '升级或购买积分',
+    desc: '订阅与积分购买会跳转到 Creem 结账（支持取消/失败提示）。',
+    link: '/pricing',
   },
 ];
 

@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useQueries, useMutation } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import StatsBar from '../components/dashboard/StatsBar';
 import TaskCard from '../components/dashboard/TaskCard';
 import AgentSidebar from '../components/dashboard/AgentSidebar';
@@ -30,6 +31,7 @@ import {
   parseTaskIdFromSubmitResponse,
 } from '@/lib/engineTaskUtils';
 import { getDashboardPanelBundle } from '@/lib/tentaosDashboardApi';
+import { fetchBillingMe } from '@/lib/billingAccountApi';
 
 const ENGINE_TASKS_STORAGE_KEY = 'tentaos-engine-tasks-v1';
 
@@ -97,7 +99,7 @@ export default function Dashboard() {
     });
   }, []);
 
-  const { data: health, isLoading: healthLoading, isError: healthQueryError, error: healthError } = useQuery({
+  const { data: health, isLoading: healthLoading, isError: healthQueryError } = useQuery({
     queryKey: ['engine-health'],
     queryFn: () => engineClient.getHealth(),
     refetchInterval: 10_000,
@@ -127,6 +129,15 @@ export default function Dashboard() {
     refetchInterval: 20_000,
   });
   const overviewErrors = overview?._errors ?? [];
+
+  const billing = useQuery({
+    queryKey: ['billing-me', 'dashboard'],
+    queryFn: () => fetchBillingMe({ timeoutMs: 10_000 }),
+    retry: 0,
+    staleTime: 30_000,
+  });
+  const billingStatus = String(billing.data?.status ?? '');
+  const creditBalance = billing.data?.credits_balance;
 
   const taskQueries = useQueries({
     queries: trackedIds.map((id) => ({
@@ -205,8 +216,8 @@ export default function Dashboard() {
             </h1>
             <p className="text-sm text-white/40 mt-1">{t('dashboardSubtitle')}</p>
             {healthQueryError && (
-              <p className="text-[11px] text-amber-400/90 mt-1" data-testid="dashboard-health-error">
-                引擎健康检查失败：{healthError instanceof Error ? healthError.message : String(healthError)}（仪表盘其余数据仍可用）
+              <p className="text-[11px] text-white/40 mt-1" data-testid="dashboard-health-error">
+                本地 Engine 未连接，当前以演示/Mock 模式运行（不会伪造付费订阅状态）。
               </p>
             )}
             {!healthQueryError && healthLoading && (
@@ -224,7 +235,32 @@ export default function Dashboard() {
               </p>
             )}
           </div>
-          <ConnectionIndicator />
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+              <p className="text-[11px] text-white/35">Billing</p>
+              <p className="text-xs text-white/75">
+                {billing.isError ? (
+                  <span className="text-amber-300/80">未接入/不可用</span>
+                ) : billing.isLoading ? (
+                  <span className="text-white/40">加载中…</span>
+                ) : (
+                  <>
+                    <span className="text-white/80">{billingStatus || '—'}</span>
+                    {creditBalance != null && (
+                      <span className="text-white/45"> · {Number(creditBalance || 0).toLocaleString()} credits</span>
+                    )}
+                  </>
+                )}
+              </p>
+            </div>
+            <Link
+              to="/pricing"
+              className="h-10 px-4 inline-flex items-center justify-center rounded-xl text-sm font-medium bg-[#00E5FF] text-[#06060B] hover:bg-[#00E5FF]/90 transition-colors"
+            >
+              升级 / 购买积分
+            </Link>
+            <ConnectionIndicator />
+          </div>
         </div>
 
         {/* Cortex overview (API if available, else mock) */}
@@ -240,14 +276,14 @@ export default function Dashboard() {
             </p>
           )}
           {overviewErrors.length > 0 && (
-            <p className="text-[11px] text-red-400/90 mb-2" data-testid="dashboard-overview-error">
+            <p className="text-[11px] text-amber-400/90 mb-2" data-testid="dashboard-overview-error">
               {overviewErrors.slice(0, 3).join(' · ')}
               {overviewErrors.length > 3 ? ` (+${overviewErrors.length - 3} more)` : ''}
             </p>
           )}
           {overview?._source === 'mock' && !overviewLoading && (
             <p className="text-[11px] text-white/30 mb-2" data-testid="dashboard-overview-fallback">
-              Using mock overview (Engine <code className="text-white/50">GET /api/dashboard/overview</code> unavailable or blocked).
+              当前使用 Sample/Mock 数据（Engine <code className="text-white/50">GET /api/dashboard/overview</code> 不可用或被阻止）。
             </p>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">

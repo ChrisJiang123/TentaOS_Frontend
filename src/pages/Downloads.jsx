@@ -8,6 +8,7 @@ import TentaLogo from '../components/brand/TentaLogo';
 import { toast } from '@/components/ui/use-toast';
 import { generateOfflineHTML } from '../lib/generateOfflineHTML';
 import useSEO from '../lib/useSEO';
+import LandingFooter from '../components/landing/LandingFooter';
 
 export default function Downloads() {
   const [downloading, setDownloading] = useState(false);
@@ -139,11 +140,7 @@ export default function Downloads() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.06] py-6 px-6">
-        <div className="max-w-4xl mx-auto flex items-center justify-center">
-          <p className="text-xs text-white/30">© 2026 TentaOS</p>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }
