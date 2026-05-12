@@ -22,7 +22,9 @@
     "src/Layout.jsx",
     "src/data/**/*.ts",
     "src/lib/tentaosDashboardApi.ts",
-    "shared/**/*.ts"
+    "shared/**/*.ts",
+    "playwright.config.ts",
+    "tests/**/*.ts"
   ],
   "exclude": ["node_modules", "dist", "src/vite-plugins", "src/components/ui", "src/api"]
 } 

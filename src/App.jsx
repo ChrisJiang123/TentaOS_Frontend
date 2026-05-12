@@ -34,37 +34,8 @@ import AuthDocs from './pages/docs/AuthDocs';
 import Triggers from './pages/Triggers';
 import Settings from './pages/Settings';
 
-
-const PublicRoutes = () => {
-  return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/Landing" replace />} />
-      <Route path="/Landing" element={<Landing />} />
-      <Route path="/Downloads" element={<Downloads />} />
-      <Route path="/Docs" element={<DocsLayout />}>
-        <Route index element={<QuickStart />} />
-        <Route path="Installation" element={<Installation />} />
-        <Route path="Authentication" element={<AuthDocs />} />
-        <Route path="Tasks" element={<TasksDocs />} />
-        <Route path="Agents" element={<AgentsDocs />} />
-        <Route path="Workflows" element={<WorkflowsDocs />} />
-        <Route path="Approvals" element={<ApprovalsDocs />} />
-        <Route path="ApiOverview" element={<DocsPlaceholder />} />
-        <Route path="ApiTasks" element={<DocsPlaceholder />} />
-        <Route path="ApiAgents" element={<DocsPlaceholder />} />
-        <Route path="ApiModels" element={<DocsPlaceholder />} />
-        <Route path="PythonSdk" element={<DocsPlaceholder />} />
-        <Route path="NodeSdk" element={<DocsPlaceholder />} />
-        <Route path="CliReference" element={<CliDocs />} />
-        <Route path="Changelog" element={<DocsPlaceholder />} />
-        <Route path="Faq" element={<DocsPlaceholder />} />
-      </Route>
-      <Route path="*" element={<AuthenticatedApp />} />
-    </Routes>
-  );
-};
-
-const AuthenticatedApp = () => {
+/** One top-level <Routes> so layout + app pages match on hard refresh (nested <Routes> under splat breaks /Agents, etc.). */
+function AppRoutes() {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -89,8 +60,40 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/Landing" replace />} />
+      <Route path="/Landing" element={<Landing />} />
+      <Route path="/Downloads" element={<Downloads />} />
+      <Route path="/Docs" element={<DocsLayout />}>
+        <Route index element={<QuickStart />} />
+        <Route path="Installation" element={<Installation />} />
+        <Route path="Authentication" element={<AuthDocs />} />
+        <Route path="Tasks" element={<TasksDocs />} />
+        <Route path="Agents" element={<AgentsDocs />} />
+        <Route path="Workflows" element={<WorkflowsDocs />} />
+        <Route path="Approvals" element={<ApprovalsDocs />} />
+        <Route path="ApiOverview" element={<DocsPlaceholder />} />
+        <Route path="ApiTasks" element={<DocsPlaceholder />} />
+        <Route path="ApiAgents" element={<DocsPlaceholder />} />
+        <Route path="ApiModels" element={<DocsPlaceholder />} />
+        <Route path="PythonSdk" element={<DocsPlaceholder />} />
+        <Route path="NodeSdk" element={<DocsPlaceholder />} />
+        <Route path="CliReference" element={<CliDocs />} />
+        <Route path="Changelog" element={<DocsPlaceholder />} />
+        <Route path="Faq" element={<DocsPlaceholder />} />
+      </Route>
+
       <Route element={<AppLayout />}>
         <Route path="/Dashboard" element={<Dashboard />} />
+        <Route path="/diagnostics" element={<Diagnostics />} />
+        <Route path="/TaskDetail" element={<TaskDetail />} />
+        <Route path="/PipelineStudio" element={<PipelineStudio />} />
+        <Route path="/Approvals" element={<Approvals />} />
+        <Route path="/Agents" element={<Agents />} />
+        <Route path="/Models" element={<Models />} />
+        <Route path="/Billing" element={<Billing />} />
+        <Route path="/Pricing" element={<Pricing />} />
+        <Route path="/Triggers" element={<Triggers />} />
+        <Route path="/Settings" element={<Settings />} />
         <Route path="/dashboard" element={<Navigate to="/Dashboard" replace />} />
         <Route path="/agents" element={<Navigate to="/Agents" replace />} />
         <Route path="/approvals" element={<Navigate to="/Approvals" replace />} />
@@ -99,22 +102,12 @@ const AuthenticatedApp = () => {
         <Route path="/billing" element={<Navigate to="/Billing" replace />} />
         <Route path="/triggers" element={<Navigate to="/Triggers" replace />} />
         <Route path="/settings" element={<Navigate to="/Settings" replace />} />
-        <Route path="/diagnostics" element={<Diagnostics />} />
-        <Route path="/TaskDetail" element={<TaskDetail />} />
-        <Route path="/PipelineStudio" element={<PipelineStudio />} />
         <Route path="/pipeline" element={<Navigate to="/PipelineStudio" replace />} />
-        <Route path="/Approvals" element={<Approvals />} />
-        <Route path="/Agents" element={<Agents />} />
-        <Route path="/Models" element={<Models />} />
-        <Route path="/Billing" element={<Billing />} />
-        <Route path="/Pricing" element={<Pricing />} />
-        <Route path="/Triggers" element={<Triggers />} />
-        <Route path="/Settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
-};
+}
 
 function App() {
   return (
@@ -122,7 +115,7 @@ function App() {
       <LanguageProvider>
         <QueryClientProvider client={queryClientInstance}>
           <Router>
-            <PublicRoutes />
+            <AppRoutes />
           </Router>
           <Analytics />
           <Toaster />

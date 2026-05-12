@@ -130,7 +130,18 @@ class TentaOSClient {
   }
 
   async request(path, options = {}) {
-    const response = await fetch(`${ENGINE_BASE_URL.replace(/\/$/, "")}${path}`, options);
+    const { timeoutMs = 10_000, ...fetchOpts } = options;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    let response;
+    try {
+      response = await fetch(`${ENGINE_BASE_URL.replace(/\/$/, "")}${path}`, {
+        ...fetchOpts,
+        signal: ctrl.signal,
+      });
+    } finally {
+      clearTimeout(t);
+    }
     const text = await response.text();
     let payload = {};
     if (text) {

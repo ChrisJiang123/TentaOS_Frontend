@@ -461,8 +461,8 @@ export default function PipelineStudio() {
       {/* Main Canvas */}
       <div className="flex-1 flex flex-col min-w-0 bg-[#141E2E]">
         {/* Toolbar */}
-        <div className="h-12 border-b border-slate-500/12 px-4 flex items-center justify-between bg-[#161F30] flex-shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
+        <div className="h-12 border-b border-slate-500/12 px-4 flex items-center justify-between gap-2 bg-[#161F30] flex-shrink-0 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
             <Workflow className="w-4 h-4 text-sky-400 flex-shrink-0" />
             <div className="flex items-baseline gap-2 min-w-0">
               <h1 className="text-sm font-medium text-slate-100 truncate">Cortex Pipeline</h1>
@@ -478,7 +478,7 @@ export default function PipelineStudio() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0 flex-shrink-0 justify-end overflow-x-auto overflow-y-hidden [scrollbar-width:thin] [&>button]:flex-shrink-0 [&>span]:flex-shrink-0 relative z-10">
             <Button size="sm" variant="ghost" className="text-slate-500 h-7 w-7 p-0 hover:text-slate-300" onClick={() => setCanvasOffset({ x: 0, y: 0 })}>
               <Maximize className="w-3.5 h-3.5" />
             </Button>
@@ -731,80 +731,81 @@ export default function PipelineStudio() {
         </div>
       </div>
 
-      {/* Right Panel - Node Config */}
-      {selectedNode && (
-        <div
-          data-testid="pipeline-inspector"
-          className="w-[220px] bg-[#151B2A] border-l border-slate-500/12 p-4 flex-shrink-0"
-        >
-          <h3 className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-4">Node Config</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="text-[11px] text-white/40 block mb-1">Label</label>
-              <p className="text-sm text-white">{selectedNode.label}</p>
-            </div>
-            {selectedNode.subtitle && (
-              <div>
-                <label className="text-[11px] text-white/40 block mb-1">Subtitle</label>
-                <p className="text-xs text-white/60">{selectedNode.subtitle}</p>
+      {/* Right panel: inspector or workflow summary; validate / dry-run always visible (template auto-selects a node) */}
+      {activeWorkflow && (
+        <div className="w-[220px] bg-[#151B2A] border-l border-slate-500/12 flex flex-col flex-shrink-0 min-h-0 max-h-full">
+          <div className="flex-1 overflow-y-auto p-4 min-h-0">
+            {selectedNode ? (
+              <div data-testid="pipeline-inspector">
+                <h3 className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-4">Node Config</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[11px] text-white/40 block mb-1">Label</label>
+                    <p className="text-sm text-white">{selectedNode.label}</p>
+                  </div>
+                  {selectedNode.subtitle && (
+                    <div>
+                      <label className="text-[11px] text-white/40 block mb-1">Subtitle</label>
+                      <p className="text-xs text-white/60">{selectedNode.subtitle}</p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-[11px] text-white/40 block mb-1">Type</label>
+                    <p className="text-xs text-white/60 capitalize">{selectedNode.type}</p>
+                  </div>
+                  {selectedNode.agent && (
+                    <div>
+                      <label className="text-[11px] text-white/40 block mb-1">Agent</label>
+                      <p className="text-xs text-white/60 capitalize">{selectedNode.agent}</p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-[11px] text-white/40 block mb-1">Position</label>
+                    <p className="text-xs text-white/40 font-mono">
+                      x: {selectedNode.position?.x || 0}, y: {selectedNode.position?.y || 0}
+                    </p>
+                  </div>
+                  <div className="pt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      data-testid="pipeline-btn-delete-node"
+                      onClick={() => handleDeleteNode(selectedNode.id)}
+                      className="w-full border-red-500/20 text-red-400 hover:bg-red-500/10 h-8 text-xs"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      Delete node
+                    </Button>
+                    <p className="text-[10px] text-white/30 mt-2">Tip: press Delete / Backspace</p>
+                  </div>
+                </div>
               </div>
+            ) : (
+              <>
+                <h3 className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-4">Workflow Info</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[11px] text-white/40 block mb-1">Name</label>
+                    <p className="text-sm text-white">{activeWorkflow.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-white/40 block mb-1">Description</label>
+                    <p className="text-xs text-white/50">{activeWorkflow.description}</p>
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-white/40 block mb-1">Nodes</label>
+                    <p className="text-sm text-white">{nodes.length}</p>
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-white/40 block mb-1">Edges</label>
+                    <p className="text-sm text-white">{edges.length}</p>
+                  </div>
+                </div>
+              </>
             )}
-            <div>
-              <label className="text-[11px] text-white/40 block mb-1">Type</label>
-              <p className="text-xs text-white/60 capitalize">{selectedNode.type}</p>
-            </div>
-            {selectedNode.agent && (
-              <div>
-                <label className="text-[11px] text-white/40 block mb-1">Agent</label>
-                <p className="text-xs text-white/60 capitalize">{selectedNode.agent}</p>
-              </div>
-            )}
-            <div>
-              <label className="text-[11px] text-white/40 block mb-1">Position</label>
-              <p className="text-xs text-white/40 font-mono">
-                x: {selectedNode.position?.x || 0}, y: {selectedNode.position?.y || 0}
-              </p>
-            </div>
-            <div className="pt-2">
-              <Button
-                size="sm"
-                variant="outline"
-                data-testid="pipeline-btn-delete-node"
-                onClick={() => handleDeleteNode(selectedNode.id)}
-                className="w-full border-red-500/20 text-red-400 hover:bg-red-500/10 h-8 text-xs"
-              >
-                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                Delete node
-              </Button>
-              <p className="text-[10px] text-white/30 mt-2">Tip: press Delete / Backspace</p>
-            </div>
           </div>
-        </div>
-      )}
-
-      {/* Right panel - Workflow info when no node selected */}
-      {!selectedNode && activeWorkflow && (
-        <div className="w-[220px] bg-[#151B2A] border-l border-slate-500/12 p-4 flex-shrink-0">
-          <h3 className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-4">Workflow Info</h3>
-          <div className="space-y-3">
-            <div>
-              <label className="text-[11px] text-white/40 block mb-1">Name</label>
-              <p className="text-sm text-white">{activeWorkflow.name}</p>
-            </div>
-            <div>
-              <label className="text-[11px] text-white/40 block mb-1">Description</label>
-              <p className="text-xs text-white/50">{activeWorkflow.description}</p>
-            </div>
-            <div>
-              <label className="text-[11px] text-white/40 block mb-1">Nodes</label>
-              <p className="text-sm text-white">{nodes.length}</p>
-            </div>
-            <div>
-              <label className="text-[11px] text-white/40 block mb-1">Edges</label>
-              <p className="text-sm text-white">{edges.length}</p>
-            </div>
-
-            <div className="pt-3 border-t border-white/[0.06] space-y-2" data-testid="pipeline-last-validate">
+          <div className="border-t border-white/[0.06] p-4 space-y-3 flex-shrink-0 bg-[#151B2A]">
+            <div className="space-y-2" data-testid="pipeline-last-validate">
               <label className="text-[11px] text-white/40 block">Last Validate</label>
               {!lastValidation ? (
                 <p className="text-xs text-white/30">No validation run yet.</p>
@@ -834,7 +835,7 @@ export default function PipelineStudio() {
               )}
             </div>
 
-            <div className="pt-2 space-y-2" data-testid="pipeline-last-dry-run">
+            <div className="space-y-2" data-testid="pipeline-last-dry-run">
               <label className="text-[11px] text-white/40 block">Last Dry Run</label>
               {!lastDryRun ? (
                 <p className="text-xs text-white/30">No dry-run yet.</p>
