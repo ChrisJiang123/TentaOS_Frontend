@@ -12,7 +12,7 @@ export default function AppLayout() {
       </div>
       {/* Mobile nav */}
       <MobileNav />
-      <main className="flex-1 overflow-auto pt-14 lg:pt-0">
+      <main id="app-scroll-container" className="flex-1 overflow-auto pt-14 lg:pt-0">
         <Outlet />
       </main>
     </div>

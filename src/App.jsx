@@ -7,6 +7,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { LanguageProvider } from '@/lib/LanguageContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import ScrollToTop from '@/components/routing/ScrollToTop';
 
 // Page imports
 import Landing from './pages/Landing';
@@ -130,6 +131,7 @@ function App() {
       <LanguageProvider>
         <QueryClientProvider client={queryClientInstance}>
           <Router>
+            <ScrollToTop />
             <AppRoutes />
           </Router>
           <Analytics />

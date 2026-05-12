@@ -115,6 +115,24 @@ test.describe('Billing/Credits/Public QA', () => {
     await expect(page.getByRole('heading', { name: 'Privacy Policy' })).toBeVisible();
   });
 
+  test('route navigation resets scroll on public pages (window)', async ({ page }) => {
+    setupMocks(page, { billingOk: false });
+
+    await page.goto('/terms', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { name: 'Terms of Service' })).toBeVisible();
+
+    // Scroll window down.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    const before = await page.evaluate(() => window.scrollY);
+    expect(before).toBeGreaterThan(50);
+
+    // Navigate via footer link; should jump back to top.
+    await page.getByRole('link', { name: 'Privacy Policy' }).first().click();
+    await expect(page).toHaveURL(/\/privacy$/);
+    const after = await page.evaluate(() => window.scrollY);
+    expect(after).toBeLessThan(10);
+  });
+
   test('4) Paid CTA calls checkout endpoint and redirects (mocked), and shows visible error on failure', async ({ page }) => {
     setupMocks(page, { billingOk: true, credits: 999, status: 'trialing', plan: 'free' });
 

@@ -152,4 +152,30 @@ test.describe('Sidebar routes', () => {
       await expect(page.getByTestId(testId)).toBeVisible({ timeout: 30_000 });
     }
   });
+
+  test('scroll resets to top on sidebar navigation (main container)', async ({ page }) => {
+    await page.goto('/Dashboard', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('dashboard-page')).toBeVisible({ timeout: 60_000 });
+
+    const main = page.locator('main');
+    // Force main scroll to bottom (only if scrollable).
+    const metrics = await main.evaluate((el) => ({
+      scrollHeight: el.scrollHeight,
+      clientHeight: el.clientHeight,
+    }));
+    if (metrics.scrollHeight > metrics.clientHeight + 20) {
+      await main.evaluate((el) => {
+        el.scrollTop = el.scrollHeight;
+      });
+      const before = await main.evaluate((el) => el.scrollTop);
+      expect(before).toBeGreaterThan(50);
+    }
+
+    await page.locator('nav a[href="/Agents"]').first().click();
+    await expect(page).toHaveURL(/\/Agents$/);
+    await expect(page.getByTestId('agents-page')).toBeVisible({ timeout: 30_000 });
+
+    const after = await main.evaluate((el) => el.scrollTop);
+    expect(after).toBeLessThan(10);
+  });
 });
