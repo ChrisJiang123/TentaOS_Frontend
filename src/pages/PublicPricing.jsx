@@ -175,7 +175,7 @@ export default function PublicPricing() {
                 <h2 className="text-lg font-semibold text-white">{t.name}</h2>
                 <div className="text-right">
                   <div className="text-2xl font-semibold text-white">{t.price}</div>
-                  <div className="text-[11px] text-white/35">/month (placeholder)</div>
+                  <div className="text-[11px] text-white/35">/month (beta pricing)</div>
                 </div>
               </div>
               <p className="text-sm text-white/45 mt-2">{t.note}</p>

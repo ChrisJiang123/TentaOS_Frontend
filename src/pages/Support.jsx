@@ -41,7 +41,7 @@ export default function Support() {
                 support@tentaos.com
               </a>
             </p>
-            <p className="text-white/45 text-xs">Typical response time: within 1–2 business days (placeholder).</p>
+            <p className="text-white/45 text-xs">Typical response time: within 1–2 business days.</p>
           </section>
 
           <section className="space-y-2">

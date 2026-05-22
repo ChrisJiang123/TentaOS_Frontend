@@ -30,7 +30,7 @@ export default function Contact() {
         <p className="text-[11px] uppercase tracking-wider text-white/35 mb-2">Contact</p>
         <h1 className="text-2xl font-semibold text-white tracking-tight mb-2">Contact TentaOS</h1>
         <p className="text-sm text-white/45 mb-10">
-          We’ll respond as soon as possible. Typical response time: within 1–2 business days (placeholder).
+          We respond to support and business inquiries as soon as possible, typically within 1–2 business days.
         </p>
 
         <div className="space-y-8 text-sm text-white/65 leading-relaxed">
@@ -50,8 +50,7 @@ export default function Contact() {
               Email:{' '}
               <a href="mailto:business@tentaos.com" className="text-[#00E5FF]/90 hover:text-[#00E5FF]">
                 business@tentaos.com
-              </a>{' '}
-              (placeholder)
+              </a>
             </p>
           </section>
 

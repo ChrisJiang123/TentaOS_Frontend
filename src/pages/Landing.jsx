@@ -14,27 +14,23 @@ import HowItWorks from '../components/landing/HowItWorks';
 import LandingFooter from '../components/landing/LandingFooter';
 import MobileMenu from '../components/landing/MobileMenu';
 import TrustLogos from '../components/landing/TrustLogos';
-import LiveMetrics from '../components/landing/LiveMetrics';
-import EmailCapture from '../components/landing/EmailCapture';
+import ReliableExecution from '../components/landing/ReliableExecution';
+import TrustSignals from '../components/landing/TrustSignals';
 
 const features = [
-  { icon: Eye, title: 'Visual Supervision', desc: 'See every step your AI agents take in real-time with beautiful workflow visualizations', color: '#3B82F6' },
-  { icon: Shield, title: 'Approval Gates', desc: 'Critical actions require your approval before execution. Stay in control always', color: '#F59E0B' },
-  { icon: Workflow, title: 'Pipeline Studio', desc: 'Build or auto-generate workflows with drag-and-drop. Like n8n for AI agents', color: '#8B5CF6' },
-  { icon: Bot, title: 'Multi-Agent', desc: '6 specialized agents work together — Planner, Researcher, Coder, Writer, Operator, Reviewer', color: '#10B981' },
-  { icon: Cpu, title: 'Model Freedom', desc: 'Use any model — local (Ollama), cloud (OpenAI, Anthropic), or TentaOS packs', color: '#EC4899' },
-  { icon: Terminal, title: 'Dual Mode', desc: 'GUI for beginners, CLI for power users. Same engine, different interfaces', color: '#06B6D4' },
+  { icon: Eye, title: 'Observable execution', desc: 'Review step-by-step traces for agent and tool actions in the dashboard.', color: '#3B82F6' },
+  { icon: Shield, title: 'Approval gates', desc: 'Pause risky steps until you approve them in configured workflows.', color: '#F59E0B' },
+  { icon: Workflow, title: 'Pipeline Studio', desc: 'Design and validate workflows with a visual editor and templates.', color: '#8B5CF6' },
+  { icon: Bot, title: 'Multi-agent tasks', desc: 'Coordinate specialized agents for planning, research, coding, and review.', color: '#10B981' },
+  { icon: Cpu, title: 'Model choice', desc: 'Use BYOK providers or hosted models where available in your plan.', color: '#EC4899' },
+  { icon: Terminal, title: 'App + terminal', desc: 'Same engine via web UI or CLI, depending on how you prefer to operate.', color: '#06B6D4' },
 ];
 
-const comparison = [
-  { feature: 'Visual Workflow Monitoring', tentaos: true, openclaw: false, perplexity: false },
-  { feature: 'Approval Gates', tentaos: true, openclaw: false, perplexity: false },
-  { feature: 'Drag & Drop Pipeline Editor', tentaos: true, openclaw: false, perplexity: false },
-  { feature: 'App + Terminal Modes', tentaos: true, openclaw: false, perplexity: false },
-  { feature: 'Local Model Support', tentaos: true, openclaw: true, perplexity: false },
-  { feature: 'Per-task Sandbox Isolation', tentaos: true, openclaw: true, perplexity: false },
-  { feature: 'Full Execution Replay', tentaos: true, openclaw: false, perplexity: false },
-  { feature: 'Cost Tracking', tentaos: true, openclaw: false, perplexity: false },
+const comparisonRows = [
+  { capability: 'Visibility', agentTools: 'Logs', chatGateways: 'Chat updates', tentaos: 'Visual trace' },
+  { capability: 'Safety', agentTools: 'Varies', chatGateways: 'Manual approval', tentaos: 'Gates + rollback' },
+  { capability: 'Cost', agentTools: 'Hard to track', chatGateways: 'Limited', tentaos: 'Cortex savings' },
+  { capability: 'Runtime', agentTools: 'Tool calls', chatGateways: 'Message tasks', tentaos: 'Action runtime' },
 ];
 
 const plans = [
@@ -62,9 +58,9 @@ export default function Landing() {
   const navigate = useNavigate();
 
   useSEO({
-    title: 'TentaOS — Visual AI Operating System | Launch AI Tasks Your Way',
-    description: 'Visual AI Operating System that lets you launch AI tasks, monitor agents, and approve actions with complete control and transparency.',
-    keywords: 'AI operating system, visual AI agents, multi-agent workflow, AI task automation, approval gates, pipeline builder, BYOK AI, AI cost tracking, TentaOS',
+    title: 'TentaOS — Visual AI Operating System (Beta)',
+    description: 'Developer-focused AI workflow platform with observable execution, approval gates, and sandboxed task runtime.',
+    keywords: 'TentaOS, AI workflows, approval gates, observable AI execution, pipeline builder, BYOK, developer tools',
   });
 
   useEffect(() => {
@@ -156,8 +152,8 @@ export default function Landing() {
           </FadeIn>
           <FadeIn delay={0.2}>
             <p className="text-lg text-white/50 mt-6 max-w-2xl mx-auto leading-relaxed">
-              Use the App if you want simplicity. Use the Terminal if you want full control. 
-              Every step visible. Every action approved. Every result auditable.
+              Run AI workflows with observable steps, approval gates, and sandboxed execution.
+              Built for teams that need verifiable automation—not black-box chat.
             </p>
           </FadeIn>
           <FadeIn delay={0.3}>
@@ -189,9 +185,12 @@ export default function Landing() {
                 Demo
               </Button>
             </div>
-            <EmailCapture />
-            <p className="text-sm text-white/30 mt-4">
-              No account required to try the web app. Desktop available for Windows, macOS & Linux.
+            <p className="text-sm text-white/35 mt-6">
+              Beta software.{' '}
+              <Link to="/contact" className="text-[#00E5FF]/90 hover:text-[#00E5FF]">
+                Contact us
+              </Link>{' '}
+              for access questions. Desktop builds available for Windows, macOS, and Linux.
             </p>
           </FadeIn>
 
@@ -214,18 +213,19 @@ export default function Landing() {
                     </React.Fragment>
                   ))}
                 </div>
-                <div className="grid grid-cols-3 gap-3 text-left">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
                   {[
-                    { label: 'Tasks Running', value: '3', color: 'text-blue-400' },
-                    { label: 'Cost This Session', value: '$0.47', color: 'text-emerald-400' },
-                    { label: 'Agents Active', value: '6', color: 'text-purple-400' },
-                  ].map(s => (
+                    { label: 'Execution trace', value: 'Step-by-step visibility' },
+                    { label: 'Approval gate', value: 'Human review on risky actions' },
+                    { label: 'Sandbox mode', value: 'Isolated runtime paths' },
+                  ].map((s) => (
                     <div key={s.label} className="bg-white/[0.03] rounded-lg p-3">
                       <p className="text-xs text-white/40">{s.label}</p>
-                      <p className={cn("text-xl font-semibold mt-1", s.color)}>{s.value}</p>
+                      <p className="text-sm text-white/70 mt-1 leading-snug">{s.value}</p>
                     </div>
                   ))}
                 </div>
+                <p className="text-[10px] text-white/25 mt-3 text-left">Illustration only — not live production metrics.</p>
               </div>
             </div>
           </FadeIn>
@@ -243,10 +243,10 @@ export default function Landing() {
           <FadeIn>
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                See everything. Control everything.
+                Observable, approval-based workflows
               </h2>
               <p className="text-white/40 mt-3 max-w-xl mx-auto">
-                TentaOS gives you full visibility and control over your AI agents
+                Tools for developers and operators who need reliable execution with clear audit trails
               </p>
             </div>
           </FadeIn>
@@ -266,8 +266,9 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Live Metrics */}
-      <LiveMetrics />
+      <ReliableExecution />
+
+      <TrustSignals />
 
       {/* How It Works */}
       <div id="howitworks">
@@ -281,26 +282,32 @@ export default function Landing() {
         <div className="max-w-3xl mx-auto">
           <FadeIn>
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold tracking-tight">TentaOS vs Others</h2>
+              <h2 className="text-3xl font-bold tracking-tight">Why TentaOS</h2>
             </div>
           </FadeIn>
           <FadeIn delay={0.1}>
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl overflow-hidden">
-              <div className="grid grid-cols-4 gap-0 border-b border-white/[0.06] p-4 text-xs font-medium">
-                <span className="text-white/40">Feature</span>
-                <span className="text-center text-blue-400">TentaOS</span>
-                <span className="text-center text-white/40">OpenClaw</span>
-                <span className="text-center text-white/40">Others</span>
+              <div className="grid grid-cols-4 gap-0 border-b border-white/[0.06] px-4 py-3 text-[11px] font-medium">
+                <span className="text-white/40">Capability</span>
+                <span className="text-white/35 text-center">Agent Tools</span>
+                <span className="text-white/35 text-center">Chat Gateways</span>
+                <span className="text-center text-blue-300 bg-blue-500/10 rounded-md py-1">TentaOS</span>
               </div>
-              {comparison.map((row, i) => (
-                <div key={i} className="grid grid-cols-4 gap-0 border-b border-white/[0.03] p-4 text-xs hover:bg-white/[0.02]">
-                  <span className="text-white/60">{row.feature}</span>
-                  <span className="text-center">{row.tentaos ? <CheckCircle2 className="w-4 h-4 text-emerald-400 mx-auto" /> : '—'}</span>
-                  <span className="text-center">{row.openclaw ? <CheckCircle2 className="w-4 h-4 text-white/30 mx-auto" /> : <span className="text-white/20">—</span>}</span>
-                  <span className="text-center">{row.perplexity ? <CheckCircle2 className="w-4 h-4 text-white/30 mx-auto" /> : <span className="text-white/20">—</span>}</span>
+              {comparisonRows.map((row) => (
+                <div
+                  key={row.capability}
+                  className="grid grid-cols-4 gap-0 border-b border-white/[0.03] px-4 py-3 text-xs hover:bg-white/[0.02]"
+                >
+                  <span className="text-white/60">{row.capability}</span>
+                  <span className="text-center text-white/45">{row.agentTools}</span>
+                  <span className="text-center text-white/45">{row.chatGateways}</span>
+                  <span className="text-center text-blue-200/95 bg-blue-500/10 rounded-md py-1">{row.tentaos}</span>
                 </div>
               ))}
             </div>
+            <p className="mt-4 text-xs text-white/40 text-center">
+              TentaOS is built for AI workflows that need visibility, approval, cost control, and rollback.
+            </p>
           </FadeIn>
         </div>
       </section>
@@ -364,10 +371,10 @@ export default function Landing() {
         <div className="max-w-3xl mx-auto text-center">
           <FadeIn>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              Ready to see your AI work?
+              Try TentaOS in beta
             </h2>
             <p className="text-white/40 mb-8">
-              TentaOS — See everything. Control everything. Trust your AI.
+              Launch the web app to explore pipelines, approvals, and execution traces.
             </p>
             <Button
               size="lg"

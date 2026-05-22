@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 const steps = [
   { num: '01', icon: Sparkles, title: 'Describe Your Goal', desc: 'Type what you want done in natural language — research, code, write, automate', color: '#3B82F6' },
   { num: '02', icon: Workflow, title: 'AI Plans the Workflow', desc: 'TentaOS decomposes your goal into steps and assigns specialized agents', color: '#8B5CF6' },
-  { num: '03', icon: Eye, title: 'Watch It Execute', desc: 'See every agent step in real-time. Approve critical actions before they happen', color: '#10B981' },
-  { num: '04', icon: CheckCircle2, title: 'Get Results', desc: 'Receive artifacts, reports, code — everything auditable and replayable', color: '#00E5FF' },
+  { num: '03', icon: Eye, title: 'Watch It Execute', desc: 'Follow steps in the trace view and approve gated actions when configured', color: '#10B981' },
+  { num: '04', icon: CheckCircle2, title: 'Get Results', desc: 'Review outputs with logs and replay where your workflow supports it', color: '#00E5FF' },
 ];
 
 export default function HowItWorks() {

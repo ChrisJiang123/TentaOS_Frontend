@@ -46,7 +46,7 @@ export default function QuickStart() {
         <div id="step-1">
           <StepCard number={1} title="Get API Key">
             <ul className="list-disc list-inside space-y-2 text-white/50">
-              <li>Sign up or log in to the <a href="#" className="text-[#00E5FF] hover:underline">TentaOS Dashboard</a></li>
+              <li>Sign up or log in to the <a href="/Dashboard" className="text-[#00E5FF] hover:underline">TentaOS Dashboard</a></li>
               <li>Navigate to <strong className="text-white/70">Settings → API Keys</strong></li>
               <li>Create a new API key and copy it securely</li>
               <li>For BYOK: add your provider keys in <strong className="text-white/70">Settings → Model Keys</strong></li>
