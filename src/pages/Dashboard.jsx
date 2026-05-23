@@ -19,6 +19,8 @@ import StepStream from '../components/dashboard/StepStream';
 import EngineTaskMetrics from '../components/dashboard/EngineTaskMetrics';
 import { useLanguage } from '@/lib/LanguageContext';
 import engineClient from '@/lib/engineClient';
+import { ENGINE_URL } from '@/config';
+import { submitEngineTask } from '@/lib/submitEngineTask';
 import ConnectionIndicator from '../components/engine/ConnectionIndicator';
 import BrowserPreview from '../components/engine/BrowserPreview';
 import TerminalOutput from '../components/engine/TerminalOutput';
@@ -73,11 +75,6 @@ export default function Dashboard() {
       ...prev,
       [taskId]: { goal, created_date, pipeline },
     }));
-  }, []);
-
-  useEffect(() => {
-    engineClient.connect();
-    return () => engineClient.disconnect();
   }, []);
 
   useEffect(() => {
@@ -167,11 +164,11 @@ export default function Dashboard() {
 
   const templateLaunch = useMutation({
     mutationFn: async ({ goal, pipeline }) => {
-      const res = await engineClient.submitTask(goal);
-      return { res, goal, pipeline };
+      const { res, taskId } = await submitEngineTask(goal);
+      return { res, goal, pipeline, taskId };
     },
-    onSuccess: ({ res, goal, pipeline }) => {
-      const tid = parseTaskIdFromSubmitResponse(res);
+    onSuccess: ({ res, goal, pipeline, taskId }) => {
+      const tid = taskId || parseTaskIdFromSubmitResponse(res);
       if (tid) registerEngineTask(tid, goal, pipeline);
       toast({
         title: '已提交到 TentaOS Engine',
@@ -180,6 +177,7 @@ export default function Dashboard() {
     },
     onError: (e) => {
       toast({
+        variant: 'destructive',
         title: '模板提交失败',
         description: e instanceof Error ? e.message : String(e),
       });
@@ -209,6 +207,20 @@ export default function Dashboard() {
   return (
     <div data-testid="dashboard-page" className="min-h-screen p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
+        {(healthQueryError || (!healthLoading && !health)) && (
+          <div
+            className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3"
+            data-testid="dashboard-engine-disconnected"
+          >
+            <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
+            <div>
+              <p className="text-sm text-red-300">Engine 未连接</p>
+              <p className="text-xs text-red-300/60">
+                请确认 Engine 正在运行，并在 Settings 中设置正确的 Engine URL。当前地址：{ENGINE_URL || '(未配置)'}
+              </p>
+            </div>
+          </div>
+        )}
         <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-semibold text-white tracking-tight">

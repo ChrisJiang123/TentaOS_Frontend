@@ -7,7 +7,13 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import engineClient from '@/lib/engineClient';
-import { ENGINE_URL, WS_URL } from '@/config';
+import {
+  ENGINE_URL,
+  WS_URL,
+  setEngineUrl,
+  clearEngineUrlOverride,
+  hasEngineUrlOverride,
+} from '@/config';
 import { useQuery } from '@tanstack/react-query';
 
 export default function Settings() {
@@ -48,6 +54,9 @@ export default function Settings() {
             <div className="space-y-3">
               <InfoRow label="ENGINE_URL" value={ENGINE_URL} />
               <InfoRow label="WS_URL" value={WS_URL} />
+              {hasEngineUrlOverride() && (
+                <p className="text-[11px] text-amber-400/90">当前使用 localStorage 覆盖（无需重新 build）</p>
+              )}
               <InfoRow label="WebSocket" value={`${conn.state}${conn.connected ? ' (connected)' : ''}`} />
               <InfoRow
                 label="Health"
@@ -59,8 +68,32 @@ export default function Settings() {
                       : (health?.status ?? 'OK')
                 }
               />
-              <div className="pt-3 text-xs text-white/35">
-                这里是本地配置占位。后续可在 Engine 提供配置/鉴权接口后接入真实设置面板。
+              <div className="space-y-2 pt-2 border-t border-white/[0.06]">
+                <label className="text-xs text-white/40">Engine URL（运行时覆盖）</label>
+                <p className="text-sm text-white font-mono break-all">{ENGINE_URL}</p>
+                <p className="text-xs text-white/30 font-mono break-all">WS: {WS_URL}</p>
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="text"
+                    placeholder="https://xxxx.ngrok-free.app"
+                    className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/25"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                        setEngineUrl(e.currentTarget.value.trim());
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => clearEngineUrlOverride()}
+                    className="px-3 py-2 text-xs text-white/40 hover:text-white/60 border border-white/[0.08] rounded-lg shrink-0"
+                  >
+                    重置
+                  </button>
+                </div>
+                <p className="text-[10px] text-white/20">
+                  输入 Engine 地址后按回车，页面会自动刷新。本地开发用 http://localhost:3001；远程 demo 用 ngrok HTTPS 地址。
+                </p>
               </div>
             </div>
           </div>

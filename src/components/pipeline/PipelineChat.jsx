@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef } from 'react';
-import engineClient from '@/lib/engineClient';
+import { submitEngineTask } from '@/lib/submitEngineTask';
 import { useToast } from '@/components/ui/use-toast';
 import { Sparkles, Loader2, Play, DollarSign, Clock, Cpu, Coins, Shield, CheckCircle2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -72,14 +72,20 @@ export default function PipelineChat({
   const [submitted, setSubmitted] = useState(false);
 
   const notifyEngineTask = async (text, pipelineMeta) => {
-    const res = await engineClient.submitTask(text);
-    const taskId = res?.task_id ?? res?.taskId ?? res?.id;
-    if (taskId && onEngineTaskSubmitted) {
-      onEngineTaskSubmitted(taskId, text, pipelineMeta);
-    } else if (taskId) {
+    const { res, taskId } = await submitEngineTask(text);
+    const tid = taskId ?? res?.task_id ?? res?.taskId ?? res?.id;
+    if (tid && onEngineTaskSubmitted) {
+      onEngineTaskSubmitted(String(tid), text, pipelineMeta);
+    } else if (tid) {
       toast({
         title: '任务已提交',
-        description: `Engine 任务 ID: ${taskId}`,
+        description: `Engine 任务 ID: ${tid}`,
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: '后端已响应但缺少 task_id',
+        description: JSON.stringify(res).slice(0, 200),
       });
     }
     setSubmitted(true);
@@ -89,39 +95,43 @@ export default function PipelineChat({
   const handleDirectEngineSubmit = async () => {
     if (!message.trim()) return;
     const text = message.trim();
+    setLoading(true);
     try {
       await notifyEngineTask(text, null);
+      setMessage('');
+      setPipeline(null);
+      setHistory([]);
     } catch (err) {
       console.error('Engine submit failed:', err);
       toast({
         variant: 'destructive',
-        title: 'Engine 提交失败',
-        description: err instanceof Error ? err.message : String(err),
+        title: 'Engine 连接失败',
+        description: err instanceof Error ? err.message : '请检查 Engine 是否运行',
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-    setMessage('');
-    setPipeline(null);
-    setHistory([]);
   };
 
   const handleLaunch = async () => {
     if (!pipeline) return;
     const text = message.trim() || pipeline.pipeline_name || 'Run pipeline';
+    setLoading(true);
     try {
       await notifyEngineTask(text, pipeline);
+      setMessage('');
+      setPipeline(null);
+      setHistory([]);
     } catch (err) {
       console.error('Engine submit failed:', err);
       toast({
         variant: 'destructive',
-        title: 'Engine 提交失败',
-        description: err instanceof Error ? err.message : String(err),
+        title: 'Engine 连接失败',
+        description: err instanceof Error ? err.message : '请检查 Engine 是否运行',
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-    setMessage('');
-    setPipeline(null);
-    setHistory([]);
   };
 
   return (
@@ -130,7 +140,13 @@ export default function PipelineChat({
       {submitted && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span className="text-sm text-emerald-400">任务已提交，正在执行...</span>
+          <span className="text-sm text-emerald-400">任务已提交 — 请查看顶部运行状态条与步骤流</span>
+        </div>
+      )}
+      {loading && (
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 mb-2 text-sm text-cyan-300">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Sending request…
         </div>
       )}
 

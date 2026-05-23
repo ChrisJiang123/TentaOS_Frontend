@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
-import { ENGINE_URL, WS_URL } from '@/config';
+import { ENGINE_URL, WS_URL, hasEngineUrlOverride, hasWsUrlOverride } from '@/config';
 import engineClient from '@/lib/engineClient';
 import { Activity, Wifi, AlertTriangle, Link2 } from 'lucide-react';
 
@@ -74,8 +74,18 @@ export default function Diagnostics() {
               <h2 className="text-sm font-medium text-white">当前配置</h2>
             </div>
             <div className="text-xs text-white/60 space-y-2 font-mono">
-              <div><span className="text-white/30">ENGINE_URL</span> {ENGINE_URL}</div>
-              <div><span className="text-white/30">WS_URL</span> {WS_URL}</div>
+              <div>
+                <span className="text-white/30">ENGINE_URL</span> {ENGINE_URL}
+                {hasEngineUrlOverride() && (
+                  <span className="text-amber-400 ml-2">(localStorage 覆盖)</span>
+                )}
+              </div>
+              <div>
+                <span className="text-white/30">WS_URL</span> {WS_URL}
+                {hasWsUrlOverride() && (
+                  <span className="text-amber-400 ml-2">(localStorage 覆盖)</span>
+                )}
+              </div>
             </div>
           </div>
 

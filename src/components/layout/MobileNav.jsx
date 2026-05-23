@@ -14,13 +14,13 @@ import { fetchBillingMe } from '@/lib/billingAccountApi';
 
 const navKeys = [
   { path: '/Dashboard', icon: LayoutDashboard, key: 'dashboard' },
-  { path: '/PipelineStudio', icon: Workflow, key: 'pipeline' },
-  { path: '/Agents', icon: Users, key: 'agents' },
+  { path: '/PipelineStudio', icon: Workflow, key: 'pipeline', comingSoon: true },
+  { path: '/Agents', icon: Users, key: 'agents', comingSoon: true },
   { path: '/Approvals', icon: Shield, key: 'approvals' },
-  { path: '/Models', icon: Cpu, key: 'models' },
+  { path: '/Models', icon: Cpu, key: 'models', comingSoon: true },
   { path: '/Pricing', icon: DollarSign, key: 'pricing' },
   { path: '/Billing', icon: Receipt, key: 'billing' },
-  { path: '/Triggers', icon: Zap, key: 'triggers' },
+  { path: '/Triggers', icon: Zap, key: 'triggers', comingSoon: true },
   { path: '/Settings', icon: Settings2, key: 'settings' },
 ];
 
@@ -84,24 +84,37 @@ export default function MobileNav() {
       )}>
         <nav className="p-3 space-y-1">
           {navKeys.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-3 rounded-lg transition-all",
-                  isActive
-                    ? "bg-sky-500/[0.07] text-white border border-sky-400/15"
-                    : "text-white/50 hover:text-white/80 hover:bg-white/[0.04] border border-transparent"
-                )}
-              >
-                <item.icon className={cn("w-[18px] h-[18px]", isActive && "text-sky-400")} />
+            const isActive = !item.comingSoon && location.pathname === item.path;
+            const itemClass = cn(
+              "flex items-center gap-3 px-3 py-3 rounded-lg transition-all w-full",
+              item.comingSoon
+                ? "text-white/25 cursor-not-allowed"
+                : isActive
+                  ? "bg-sky-500/[0.07] text-white border border-sky-400/15"
+                  : "text-white/50 hover:text-white/80 hover:bg-white/[0.04] border border-transparent"
+            );
+            const inner = (
+              <>
+                <item.icon className={cn("w-[18px] h-[18px]", isActive && "text-sky-400", item.comingSoon && "opacity-50")} />
                 <span className="text-sm font-medium flex-1">{t(item.key)}</span>
+                {item.comingSoon && (
+                  <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-white/[0.06] text-white/30">Soon</span>
+                )}
                 {item.key === 'approvals' && pendingCount > 0 && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 min-w-[20px] text-center">{pendingCount}</span>
                 )}
+              </>
+            );
+            if (item.comingSoon) {
+              return (
+                <div key={item.path} className={itemClass} aria-disabled="true">
+                  {inner}
+                </div>
+              );
+            }
+            return (
+              <Link key={item.path} to={item.path} onClick={() => setOpen(false)} className={itemClass}>
+                {inner}
               </Link>
             );
           })}
