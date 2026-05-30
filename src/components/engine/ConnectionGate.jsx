@@ -1,28 +1,43 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ENGINE_URL, WS_URL, setEngineUrl, clearEngineUrl, hasEngineOverride } from '@/config';
+import {
+  ENGINE_URL,
+  WS_URL,
+  DEFAULT_DEMO_ENGINE_URL,
+  setEngineUrl,
+  clearEngineUrl,
+  hasEngineOverride,
+  saveEngineUrlQuiet,
+  bootstrapDemoEngineIfNeeded,
+} from '@/config';
 import engineClient from '@/lib/engineClient';
 import { Loader2, Plug, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 
 /**
- * 包裹 Dashboard。Engine 不可达时显示清晰的连接引导，
- * 可达时渲染 children。解决：任务发不到后端、用户一进来不知道干嘛。
+ * Wraps Dashboard. Auto-connects to the public demo Engine when healthy;
+ * otherwise shows a manual connection guide.
  */
 export default function ConnectionGate({ children, onConnected }) {
   const [status, setStatus] = useState('checking'); // checking | connected | offline
   const [input, setInput] = useState('');
   const [probing, setProbing] = useState(false);
+  const [resolvedEngineUrl, setResolvedEngineUrl] = useState(ENGINE_URL);
+  const [resolvedWsUrl, setResolvedWsUrl] = useState(WS_URL);
 
   const isHttpsPage = typeof window !== 'undefined' && window.location.protocol === 'https:';
-  const isHttpEngine = ENGINE_URL.startsWith('http://');
+  const isHttpEngine = resolvedEngineUrl.startsWith('http://');
   const mixedContentRisk = isHttpsPage && isHttpEngine;
 
   const connectedNotified = useRef(false);
+  const bootstrapDone = useRef(false);
 
   const probe = useCallback(async () => {
     setProbing(true);
     try {
       await engineClient.getHealth();
       setStatus('connected');
+      if (!hasEngineOverride() && import.meta.env.PROD) {
+        saveEngineUrlQuiet(resolvedEngineUrl, resolvedWsUrl);
+      }
       if (!connectedNotified.current) {
         connectedNotified.current = true;
         onConnected?.();
@@ -33,12 +48,30 @@ export default function ConnectionGate({ children, onConnected }) {
     } finally {
       setProbing(false);
     }
-  }, [onConnected]);
+  }, [onConnected, resolvedEngineUrl, resolvedWsUrl]);
 
   useEffect(() => {
-    probe();
+    let cancelled = false;
+
+    async function init() {
+      if (!bootstrapDone.current && import.meta.env.PROD && !hasEngineOverride()) {
+        bootstrapDone.current = true;
+        const result = await bootstrapDemoEngineIfNeeded();
+        if (cancelled) return;
+        if (result.ok && result.engineUrl) {
+          setResolvedEngineUrl(result.engineUrl);
+          setResolvedWsUrl(result.wsUrl || WS_URL);
+        }
+      }
+      if (!cancelled) await probe();
+    }
+
+    init();
     const t = setInterval(probe, 15000);
-    return () => clearInterval(t);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
   }, [probe]);
 
   if (status === 'checking') {
@@ -56,7 +89,6 @@ export default function ConnectionGate({ children, onConnected }) {
     return children;
   }
 
-  // status === 'offline'
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-[#06060B]">
       <div className="w-full max-w-lg">
@@ -67,7 +99,7 @@ export default function ConnectionGate({ children, onConnected }) {
             </div>
             <div>
               <h1 className="text-lg font-semibold text-white">连接你的 TentaOS Engine</h1>
-              <p className="text-xs text-white/40">Dashboard 需要先连上正在运行的 Engine</p>
+              <p className="text-xs text-white/40">无法自动连接 {DEFAULT_DEMO_ENGINE_URL}</p>
             </div>
           </div>
 
@@ -75,8 +107,8 @@ export default function ConnectionGate({ children, onConnected }) {
             <p>请确认：</p>
             <ol className="space-y-2 text-[13px] text-white/50 list-decimal list-inside">
               <li>Engine 已在你的电脑上启动（<code className="text-cyan-300/80 bg-white/[0.04] px-1 rounded">node server.js</code>）</li>
-              <li>已用 ngrok 把它暴露成 https 地址（<code className="text-cyan-300/80 bg-white/[0.04] px-1 rounded">ngrok http 3001</code>）</li>
-              <li>把下面的地址填成 ngrok 给你的 https 地址</li>
+              <li>默认 demo 地址为 <span className="font-mono text-cyan-300/80">{DEFAULT_DEMO_ENGINE_URL}</span></li>
+              <li>若使用本地或 ngrok 隧道，请在下方手动填写 HTTPS Engine 地址</li>
             </ol>
           </div>
 
@@ -84,9 +116,9 @@ export default function ConnectionGate({ children, onConnected }) {
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 mb-4">
               <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
               <p className="text-[12px] text-red-300/90">
-                当前地址是 <span className="font-mono">{ENGINE_URL}</span>，是 http。
+                当前地址是 <span className="font-mono">{resolvedEngineUrl}</span>，是 http。
                 这个页面是 https，浏览器会拦截 http 请求（任务发不出去且不报错）。
-                请改用 ngrok 的 <span className="font-semibold">https</span> 地址。
+                请改用 <span className="font-semibold">https</span> 地址。
               </p>
             </div>
           )}
@@ -97,7 +129,7 @@ export default function ConnectionGate({ children, onConnected }) {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="https://xxxx.ngrok-free.app"
+              placeholder={DEFAULT_DEMO_ENGINE_URL}
               className="flex-1 bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2.5 text-sm text-white font-mono placeholder:text-white/25 outline-none focus:border-blue-500/50"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && input.trim()) setEngineUrl(input.trim());
@@ -114,8 +146,8 @@ export default function ConnectionGate({ children, onConnected }) {
 
           <div className="flex items-center justify-between mt-5 pt-4 border-t border-white/[0.06]">
             <div className="text-[11px] text-white/30 font-mono">
-              <div>当前: {ENGINE_URL}</div>
-              <div>WS: {WS_URL}</div>
+              <div>当前: {resolvedEngineUrl}</div>
+              <div>WS: {resolvedWsUrl}</div>
               {hasEngineOverride() && <div className="text-amber-400/70">已用自定义地址</div>}
             </div>
             <div className="flex items-center gap-2">

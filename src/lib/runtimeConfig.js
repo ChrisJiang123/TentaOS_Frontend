@@ -26,6 +26,10 @@ function wsFromHttp(httpBase) {
   }
 }
 
+/** Public demo Engine (Cloudflare Tunnel) — default for production/preview */
+export const DEFAULT_DEMO_ENGINE_URL = 'https://engine.tentaos.com';
+export const DEFAULT_DEMO_WS_URL = 'wss://engine.tentaos.com/ws';
+
 const BUILD_ENGINE_URL =
   trimUrl(import.meta.env.VITE_ENGINE_URL) || trimUrl(import.meta.env.VITE_API_URL) || '';
 const BUILD_WS_URL = trimUrl(import.meta.env.VITE_WS_URL) || '';
@@ -47,14 +51,17 @@ function resolveEngineUrl() {
   const stored = getStoredEngineUrl();
   if (stored) return stored;
   if (BUILD_ENGINE_URL) return BUILD_ENGINE_URL;
-  return isProd ? '' : 'http://localhost:3001';
+  if (isProd) return DEFAULT_DEMO_ENGINE_URL;
+  return 'http://localhost:3001';
 }
 
 function resolveWsUrl(httpUrl) {
   const storedWs = getStoredWsUrl();
   if (storedWs) return storedWs;
   if (BUILD_WS_URL) return BUILD_WS_URL;
-  return wsFromHttp(httpUrl) || (isProd ? '' : 'ws://localhost:3001/ws');
+  const derived = wsFromHttp(httpUrl);
+  if (derived) return derived;
+  return isProd ? DEFAULT_DEMO_WS_URL : 'ws://localhost:3001/ws';
 }
 
 /** Resolved HTTP base for Engine REST API (evaluated at module load; reload after setEngineUrl) */
@@ -85,6 +92,56 @@ export function hasEngineUrlOverride() {
 
 export function hasWsUrlOverride() {
   return !!getStoredWsUrl();
+}
+
+/** Persist Engine URL without reload (used after successful auto-connect) */
+export function saveEngineUrlQuiet(url, wsUrl) {
+  if (typeof window === 'undefined') return;
+  const clean = trimUrl(url);
+  if (!clean) return;
+  localStorage.setItem(STORAGE_ENGINE, clean);
+  if (wsUrl) {
+    localStorage.setItem(STORAGE_WS, trimUrl(wsUrl));
+  } else {
+    localStorage.removeItem(STORAGE_WS);
+  }
+}
+
+/** Probe Engine health at a base URL (no-store, cache-busted) */
+export async function probeEngineHealth(baseUrl = DEFAULT_DEMO_ENGINE_URL) {
+  const clean = trimUrl(baseUrl);
+  if (!clean) return false;
+  try {
+    const res = await fetch(`${clean}/api/health?t=${Date.now()}`, {
+      method: 'GET',
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+        Accept: 'application/json',
+      },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * In production/preview with no saved Engine URL, probe the public demo Engine.
+ * On success, persist URLs so subsequent loads skip ConnectionGate when healthy.
+ */
+export async function bootstrapDemoEngineIfNeeded() {
+  if (typeof window === 'undefined' || !isProd) return { bootstrapped: false, ok: false };
+  if (getStoredEngineUrl()) return { bootstrapped: false, ok: true, reason: 'stored' };
+
+  const targetUrl = BUILD_ENGINE_URL || DEFAULT_DEMO_ENGINE_URL;
+  const targetWs = BUILD_WS_URL || wsFromHttp(targetUrl) || DEFAULT_DEMO_WS_URL;
+  const ok = await probeEngineHealth(targetUrl);
+  if (ok) {
+    saveEngineUrlQuiet(targetUrl, targetWs);
+    return { bootstrapped: true, ok: true, engineUrl: targetUrl, wsUrl: targetWs };
+  }
+  return { bootstrapped: true, ok: false, engineUrl: targetUrl };
 }
 
 /** Persist Engine URL and reload (WS derived from HTTP unless explicitly stored) */

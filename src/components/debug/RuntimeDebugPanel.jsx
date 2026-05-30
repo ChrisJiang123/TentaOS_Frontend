@@ -96,7 +96,7 @@ export default function RuntimeDebugPanel() {
             <>
               {localhostWarn && (
                 <div className="px-3 py-2 text-[10px] text-amber-300/90 bg-amber-500/10 border-b border-amber-500/20">
-                  正在使用 localhost 或未配置 VITE_ENGINE_URL。Demo 请设置 .env.local 指向 ngrok/backend。
+                  正在使用 localhost 或未配置 VITE_ENGINE_URL。Demo 默认使用 https://engine.tentaos.com，或在 Settings 中手动覆盖。
                 </div>
               )}
 

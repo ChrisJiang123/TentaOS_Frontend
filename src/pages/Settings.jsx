@@ -75,7 +75,7 @@ export default function Settings() {
                 <div className="flex gap-2 mt-2">
                   <input
                     type="text"
-                    placeholder="https://xxxx.ngrok-free.app"
+                    placeholder="https://engine.tentaos.com"
                     className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/25"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && e.currentTarget.value.trim()) {
@@ -92,7 +92,7 @@ export default function Settings() {
                   </button>
                 </div>
                 <p className="text-[10px] text-white/20">
-                  输入 Engine 地址后按回车，页面会自动刷新。本地开发用 http://localhost:3001；远程 demo 用 ngrok HTTPS 地址。
+                  输入 Engine 地址后按回车，页面会自动刷新。本地开发用 http://localhost:3001；远程 demo 默认 {`https://engine.tentaos.com`}，也可手动填写 ngrok 等地址。
                 </p>
               </div>
             </div>
