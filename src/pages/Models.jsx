@@ -16,7 +16,7 @@ export default function Models() {
     staleTime: 60_000,
   });
 
-  const models = data?.items || [];
+  const models = Array.isArray(data?.items) ? data.items.filter((m) => m && m.id) : [];
   const isFallback = data?.fallback;
 
   return (

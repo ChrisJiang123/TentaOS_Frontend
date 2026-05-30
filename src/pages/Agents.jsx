@@ -16,7 +16,7 @@ export default function Agents() {
     staleTime: 60_000,
   });
 
-  const agents = data?.items || [];
+  const agents = Array.isArray(data?.items) ? data.items.filter((a) => a && a.id) : [];
   const isFallback = data?.fallback;
 
   return (
@@ -72,7 +72,7 @@ export default function Agents() {
                   <div className="flex flex-wrap gap-1.5">
                     {agent.tools.map((tool) => (
                       <span
-                        key={tool}
+                        key={String(tool)}
                         className="text-[10px] px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.06] text-white/50"
                       >
                         {tool}

@@ -23,7 +23,10 @@ const TRIGGER_TYPES = [
 function loadLocalDemo() {
   try {
     const raw = localStorage.getItem(DEMO_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    }
   } catch {
     /* ignore */
   }
@@ -68,8 +71,9 @@ export default function Triggers() {
     }
   }, [triggersQuery.data]);
 
-  const engineItems = triggersQuery.data?.items || [];
-  const items = localMode ? localItems : engineItems;
+  const engineItems = Array.isArray(triggersQuery.data?.items) ? triggersQuery.data.items : [];
+  const localList = Array.isArray(localItems) ? localItems : [];
+  const items = localMode ? localList : engineItems;
   const isLoading = triggersQuery.isLoading && !localMode;
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['control-plane-triggers'] });
@@ -239,7 +243,13 @@ function TriggerRow({ trigger, onToggle, onDelete }) {
         </p>
         <p className="text-[10px] text-white/25 mt-1">
           fires: {trigger.trigger_count ?? 0}
-          {trigger.last_triggered && ` · last: ${new Date(trigger.last_triggered).toLocaleString()}`}
+          {trigger.last_triggered && (() => {
+            try {
+              return ` · last: ${new Date(trigger.last_triggered).toLocaleString()}`;
+            } catch {
+              return '';
+            }
+          })()}
         </p>
       </div>
       <div className="flex items-center gap-2">

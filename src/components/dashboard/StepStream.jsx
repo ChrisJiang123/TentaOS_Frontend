@@ -11,6 +11,8 @@ const LABELS = {
   tool_finished: '工具完成',
   llm_streaming: 'LLM 流式输出',
   completed: '已完成',
+  task_finished: '任务结束',
+  connection_established: 'WS 已连接',
   failed: '失败',
   task_started: '任务开始',
   task_completed: '任务完成',

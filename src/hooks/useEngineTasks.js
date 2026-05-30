@@ -5,7 +5,10 @@ import { engineTaskStore } from '@/lib/engineTaskStore';
 export function useEngineTasks() {
   const [snap, setSnap] = useState(() => engineTaskStore.getSnapshot());
   useEffect(() => engineTaskStore.subscribe(setSnap), []);
-  return snap;
+  return {
+    ...snap,
+    tasks: Array.isArray(snap?.tasks) ? snap.tasks : [],
+  };
 }
 
 export function useEngineTask(taskId) {

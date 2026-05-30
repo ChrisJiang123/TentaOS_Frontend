@@ -62,7 +62,7 @@ async function safeWrite(path, { method = 'POST', body } = {}) {
 export async function fetchAgents() {
   const res = await safeGet('/api/agents', ['agents']);
   if (res.ok && res.list.length) {
-    return { ...res, items: res.list.map(normalizeAgent) };
+    return { ...res, items: res.list.map(normalizeAgent).filter((a) => a && a.id) };
   }
   if (res.ok && !res.list.length) {
     return { ...res, items: [], empty: true };
@@ -79,7 +79,7 @@ export async function fetchAgents() {
 export async function fetchModels() {
   const res = await safeGet('/api/models', ['models']);
   if (res.ok && res.list.length) {
-    return { ...res, items: res.list.map(normalizeModel) };
+    return { ...res, items: res.list.map(normalizeModel).filter((m) => m && m.id) };
   }
   if (res.ok && !res.list.length) {
     return { ...res, items: [], empty: true };
@@ -96,7 +96,7 @@ export async function fetchModels() {
 export async function fetchTriggers() {
   const res = await safeGet('/api/triggers', ['triggers']);
   if (res.ok) {
-    return { ...res, items: res.list.map(normalizeTrigger) };
+    return { ...res, items: res.list.map(normalizeTrigger).filter((t) => t && t.id) };
   }
   return { ok: false, source: 'unavailable', items: [], error: res.error };
 }
@@ -116,7 +116,9 @@ export async function deleteTrigger(id) {
 export async function fetchPricing() {
   const res = await safeGet('/api/pricing', ['plans', 'products']);
   if (res.ok && (res.list.length || Object.keys(res.data).length)) {
-    return { ...res, pricing: res.data, plans: res.list.length ? res.list : res.data.plans || [] };
+    const plansRaw = res.list.length ? res.list : res.data.plans;
+    const plans = Array.isArray(plansRaw) ? plansRaw : [];
+    return { ...res, pricing: res.data, plans };
   }
   return {
     ok: false,
