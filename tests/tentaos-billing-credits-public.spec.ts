@@ -83,8 +83,8 @@ test.describe('Billing/Credits/Public QA', () => {
     await page.goto('/Dashboard', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('12,000 credits', { exact: false }).first()).toBeVisible();
 
-    await page.goto('/Billing', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByTestId('billing-page')).toBeVisible();
+    await page.goto('/Usage', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('usage-page')).toBeVisible();
     await expect(page.getByText(/Credit Balance/i)).toBeVisible();
     await expect(page.getByText('12,000', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('Billing provider', { exact: true })).toBeVisible();

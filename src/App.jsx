@@ -17,7 +17,7 @@ import PipelineStudio from './pages/PipelineStudio';
 import Approvals from './pages/Approvals';
 import Agents from './pages/Agents';
 import Models from './pages/Models';
-import Billing from './pages/Billing';
+import Usage from './pages/Usage';
 import Pricing from './pages/Pricing';
 import Diagnostics from './pages/Diagnostics';
 import AppLayout from './components/layout/AppLayout';
@@ -107,7 +107,7 @@ function AppRoutes() {
         <Route path="/Approvals" element={<Approvals />} />
         <Route path="/Agents" element={<Agents />} />
         <Route path="/Models" element={<Models />} />
-        <Route path="/Billing" element={<Billing />} />
+        <Route path="/Usage" element={<Usage />} />
         <Route path="/Pricing" element={<Pricing />} />
         <Route path="/Triggers" element={<Triggers />} />
         <Route path="/Settings" element={<Settings />} />
@@ -115,7 +115,9 @@ function AppRoutes() {
         <Route path="/agents" element={<Navigate to="/Agents" replace />} />
         <Route path="/approvals" element={<Navigate to="/Approvals" replace />} />
         <Route path="/models" element={<Navigate to="/Models" replace />} />
-        <Route path="/billing" element={<Navigate to="/Billing" replace />} />
+        <Route path="/usage" element={<Navigate to="/Usage" replace />} />
+        <Route path="/Billing" element={<Navigate to="/Usage" replace />} />
+        <Route path="/billing" element={<Navigate to="/Usage" replace />} />
         <Route path="/triggers" element={<Navigate to="/Triggers" replace />} />
         <Route path="/settings" element={<Navigate to="/Settings" replace />} />
         <Route path="/pipeline" element={<Navigate to="/PipelineStudio" replace />} />

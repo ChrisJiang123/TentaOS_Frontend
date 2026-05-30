@@ -115,8 +115,7 @@ test.describe('Sidebar routes', () => {
     { path: '/Agents', testId: 'agents-page' },
     { path: '/Approvals', testId: 'approvals-page' },
     { path: '/Models', testId: 'models-page' },
-    { path: '/Pricing', testId: 'pricing-page' },
-    { path: '/Billing', testId: 'billing-page' },
+    { path: '/Usage', testId: 'usage-page' },
     { path: '/Triggers', testId: 'triggers-page' },
     { path: '/Settings', testId: 'settings-page' },
   ];
@@ -140,8 +139,7 @@ test.describe('Sidebar routes', () => {
       { href: '/Agents', testId: 'agents-page' },
       { href: '/Approvals', testId: 'approvals-page' },
       { href: '/Models', testId: 'models-page' },
-      { href: '/Pricing', testId: 'pricing-page' },
-      { href: '/Billing', testId: 'billing-page' },
+      { href: '/Usage', testId: 'usage-page' },
       { href: '/Triggers', testId: 'triggers-page' },
       { href: '/Settings', testId: 'settings-page' },
     ];

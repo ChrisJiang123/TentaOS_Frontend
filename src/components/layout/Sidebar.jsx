@@ -2,8 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Workflow, Users, Shield, 
-  Cpu, ChevronLeft, ChevronRight, Receipt,
-  LogOut, DollarSign, FileText, Download, Zap, Settings2
+  Cpu, ChevronLeft, ChevronRight, BarChart3,
+  LogOut, FileText, Download, Zap, Settings2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import TentaLogo from '../brand/TentaLogo';
@@ -19,8 +19,7 @@ const navKeys = [
   { path: '/Agents', icon: Users, key: 'agents' },
   { path: '/Approvals', icon: Shield, key: 'approvals', badgeKey: 'approvals' },
   { path: '/Models', icon: Cpu, key: 'models' },
-  { path: '/Pricing', icon: DollarSign, key: 'pricing' },
-  { path: '/Billing', icon: Receipt, key: 'billing' },
+  { path: '/Usage', icon: BarChart3, key: 'usage' },
   { path: '/Triggers', icon: Zap, key: 'triggers' },
   { path: '/Settings', icon: Settings2, key: 'settings' },
 ];
@@ -132,9 +131,9 @@ export default function Sidebar() {
                 </div>
                 <Link
                   to="/pricing"
-                  className="text-[11px] px-2 py-1 rounded-md bg-[#00E5FF] text-[#06060B] hover:bg-[#00E5FF]/90 transition-colors"
+                  className="text-[11px] px-2 py-1 rounded-md bg-white/[0.06] text-white/70 hover:bg-white/[0.10] border border-white/[0.08] transition-colors"
                 >
-                  Upgrade
+                  Pricing
                 </Link>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-white/45">
@@ -151,7 +150,7 @@ export default function Sidebar() {
             </>
           ) : (
             <Link to="/pricing" className="block w-full text-center text-[10px] text-white/60 hover:text-white/80">
-              $
+              P
             </Link>
           )}
         </div>
