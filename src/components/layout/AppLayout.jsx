@@ -6,6 +6,7 @@ import engineClient from '@/lib/engineClient';
 import { engineTaskStore } from '@/lib/engineTaskStore';
 import PipelineRunStatusBar from '@/components/debug/PipelineRunStatusBar';
 import RuntimeDebugPanel from '@/components/debug/RuntimeDebugPanel';
+import PageErrorBoundary from '@/components/common/PageErrorBoundary';
 
 export default function AppLayout() {
   useEffect(() => {
@@ -25,7 +26,9 @@ export default function AppLayout() {
       <main id="app-scroll-container" className="flex-1 overflow-auto pt-14 lg:pt-0 flex flex-col">
         <PipelineRunStatusBar />
         <div className="flex-1 min-h-0">
-          <Outlet />
+          <PageErrorBoundary>
+            <Outlet />
+          </PageErrorBoundary>
         </div>
       </main>
       <RuntimeDebugPanel />

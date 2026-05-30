@@ -105,8 +105,18 @@ export default function Billing() {
 
           {!billingConnected && !billing.isLoading && (
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 text-sm text-white/45">
-              Billing is in early access. Subscription and credit checkout appear when the Engine exposes{' '}
-              <code className="text-white/35">/api/billing/me</code> and Creem checkout.
+              <p className="font-medium text-white/70 mb-2">Early access — billing not connected</p>
+              <p className="mb-4">
+                Checkout and paid status require Engine endpoints{' '}
+                <code className="text-white/35">/api/billing/me</code> and Creem checkout. We never imply a
+                successful payment unless the backend confirms it.
+              </p>
+              <Link
+                to="/contact"
+                className="inline-flex items-center text-sm text-[#00E5FF]/90 hover:text-[#00E5FF] font-medium"
+              >
+                Request access / onboarding →
+              </Link>
             </div>
           )}
 

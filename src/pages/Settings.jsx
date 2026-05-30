@@ -15,6 +15,7 @@ import {
   hasEngineUrlOverride,
 } from '@/config';
 import { useQuery } from '@tanstack/react-query';
+import { probeTaskApi, fetchControlPlaneStatus } from '@/lib/controlPlaneApi';
 
 export default function Settings() {
   const { user, logout } = useAuth();
@@ -25,6 +26,21 @@ export default function Settings() {
     refetchInterval: 15000,
   });
   const conn = engineClient.getConnectionInfo?.() || { state: 'unknown', connected: false };
+
+  const taskApi = useQuery({
+    queryKey: ['settings-task-api'],
+    queryFn: probeTaskApi,
+    retry: 0,
+    staleTime: 20_000,
+    refetchInterval: 30_000,
+  });
+
+  const controlPlane = useQuery({
+    queryKey: ['settings-control-plane'],
+    queryFn: fetchControlPlaneStatus,
+    retry: 0,
+    staleTime: 30_000,
+  });
 
   return (
     <motion.div
@@ -95,6 +111,40 @@ export default function Settings() {
                   输入 Engine 地址后按回车，页面会自动刷新。本地开发用 http://localhost:3001；远程 demo 默认 {`https://engine.tentaos.com`}，也可手动填写 ngrok 等地址。
                 </p>
               </div>
+            </div>
+          </div>
+
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+            <h2 className="text-sm font-medium text-white mb-4">Control plane status</h2>
+            <div className="space-y-2">
+              <InfoRow label="Active Engine URL" value={ENGINE_URL} />
+              <InfoRow label="Inferred WS URL" value={WS_URL} />
+              <InfoRow
+                label="Health"
+                value={
+                  healthLoading ? 'Loading…' : healthError ? 'Unreachable' : (health?.status ?? 'OK')
+                }
+              />
+              <InfoRow
+                label="Task API (GET /api/tasks)"
+                value={
+                  taskApi.isLoading
+                    ? 'Checking…'
+                    : taskApi.data?.ok
+                      ? `OK · ${taskApi.data.count ?? 0} tasks`
+                      : `Error${taskApi.data?.error ? `: ${taskApi.data.error}` : ''}`
+                }
+              />
+              <InfoRow
+                label="Control plane"
+                value={
+                  controlPlane.isLoading
+                    ? 'Checking…'
+                    : controlPlane.data?.ok
+                      ? controlPlane.data.status?.status || controlPlane.data.status?.phase || 'Connected'
+                      : 'Not available yet'
+                }
+              />
             </div>
           </div>
 

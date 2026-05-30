@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import engineClient from '@/lib/engineClient';
 import { useToast } from '@/components/ui/use-toast';
+import { APPROVAL_ACTION_EXAMPLES } from '@/data/controlPlaneFallbacks';
 
 const riskConfig = {
   low: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', ring: 'ring-emerald-500/20' },
@@ -239,11 +240,38 @@ export default function Approvals() {
             ))}
           </AnimatePresence>
           {!isLoading && filtered.length === 0 && (
-            <div className="text-center py-16 text-white/30">
+            <div className="text-center py-12 text-white/30">
               <Shield className="w-8 h-8 mx-auto mb-3 text-white/15" />
               <p className="text-sm">No {filter} approvals</p>
+              <p className="text-xs text-white/35 mt-2 max-w-md mx-auto">
+                When agents request high-risk actions, they appear here for approve / reject / revise.
+              </p>
+              {filter === 'pending' && (
+                <div className="mt-8 text-left max-w-lg mx-auto rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                  <p className="text-[11px] text-white/40 mb-3 uppercase tracking-wide">
+                    Example action types (reference only — not pending items)
+                  </p>
+                  <ul className="space-y-2">
+                    {APPROVAL_ACTION_EXAMPLES.map((ex) => (
+                      <li key={ex.type} className="text-xs text-white/50 flex gap-2">
+                        <span className={cn(
+                          'shrink-0 text-[10px] uppercase px-1.5 py-0.5 rounded',
+                          ex.risk === 'critical' ? 'bg-red-500/10 text-red-400' :
+                          ex.risk === 'high' ? 'bg-orange-500/10 text-orange-400' :
+                          'bg-amber-500/10 text-amber-400',
+                        )}>
+                          {ex.risk}
+                        </span>
+                        <span>
+                          <strong className="text-white/65">{ex.label}:</strong> {ex.example}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {apiUnavailable && (
-                <p className="text-xs text-white/20 mt-2">Nothing pending on the Engine right now.</p>
+                <p className="text-xs text-white/20 mt-4">Engine approvals API unreachable.</p>
               )}
             </div>
           )}

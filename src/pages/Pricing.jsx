@@ -2,15 +2,29 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import useSEO from '@/lib/useSEO';
 import BillingStatusPanel from '@/components/pricing/BillingStatusPanel';
 import TentaOSProCard from '@/components/pricing/TentaOSProCard';
 import AiWrapperDisclaimer from '@/components/pricing/AiWrapperDisclaimer';
 import PricingLegalNotice from '@/components/pricing/PricingLegalNotice';
 import { FREE_PLAN } from '@/lib/billingProducts';
+import { fetchPricing } from '@/lib/controlPlaneApi';
 
 export default function Pricing() {
   const [checkoutError, setCheckoutError] = useState('');
+
+  const pricingQuery = useQuery({
+    queryKey: ['engine-pricing'],
+    queryFn: fetchPricing,
+    retry: 0,
+    staleTime: 60_000,
+  });
+
+  const enginePlans = pricingQuery.data?.plans || [];
+  const enginePricing = pricingQuery.data?.pricing || {};
+  const useEnginePricing = pricingQuery.data?.ok && enginePlans.length > 0;
+  const isFallback = pricingQuery.data?.fallback;
 
   useSEO({
     title: 'Pricing — TentaOS',
@@ -25,8 +39,13 @@ export default function Pricing() {
           <div>
             <h1 className="text-2xl font-semibold text-white tracking-tight">Pricing</h1>
             <p className="text-sm text-white/40 mt-1">
-              Upgrade to Pro or view the public pricing page for credit packs.
+              {useEnginePricing
+                ? 'Plans from Engine GET /api/pricing'
+                : 'Compliant static plans — live pricing when Engine exposes /api/pricing'}
             </p>
+            {isFallback && !pricingQuery.isLoading && (
+              <p className="text-[11px] text-white/30 mt-1">Using static plan copy (no fake usage metrics).</p>
+            )}
           </div>
           <Link
             to="/pricing"
@@ -59,6 +78,13 @@ export default function Pricing() {
           </div>
           <TentaOSProCard onCheckoutError={setCheckoutError} compact />
         </div>
+
+        {useEnginePricing && (
+          <div className="mb-8 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-xs text-white/55">
+            Engine pricing metadata loaded ({enginePlans.length} plan{enginePlans.length === 1 ? '' : 's'}).
+            {enginePricing.note && ` ${enginePricing.note}`}
+          </div>
+        )}
 
         <div className="space-y-4">
           <AiWrapperDisclaimer />
