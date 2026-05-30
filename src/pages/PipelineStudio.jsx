@@ -10,6 +10,8 @@ import { engineTaskStore } from '@/lib/engineTaskStore';
 import { buildResultByStepId } from '@/lib/engineTaskUtils';
 import { fetchCortexInfo } from '@/lib/controlPlaneApi';
 import { formatMs, formatCostShort } from '@/lib/formatNumbers';
+import { safeArray, safeText, policyRows, safeStringList } from '@/lib/safeRender';
+import SafeJsonBlock from '@/components/common/SafeJsonBlock';
 
 function safeSteps(raw) {
   if (Array.isArray(raw?.pipeline?.steps)) return raw.pipeline.steps;
@@ -22,12 +24,43 @@ function safeResults(raw) {
 }
 
 function safeLayers(cortex) {
-  return Array.isArray(cortex?.layers) ? cortex.layers : [];
+  return safeArray(cortex?.layers);
 }
 
-function safeStringList(value) {
-  if (Array.isArray(value)) return value.filter(Boolean).map(String);
-  return [];
+function normalizeCortexView(raw) {
+  const cortex = raw && typeof raw === 'object' ? raw : {};
+  const summaryRaw = cortex.summary;
+  const summary =
+    summaryRaw && typeof summaryRaw === 'object' && !Array.isArray(summaryRaw) ? summaryRaw : {};
+
+  const recentPipelines =
+    safeArray(cortex.recent_pipelines).length > 0
+      ? safeArray(cortex.recent_pipelines)
+      : safeArray(summary.recent_pipelines);
+
+  const recentEvents =
+    safeArray(cortex.recent_events).length > 0
+      ? safeArray(cortex.recent_events)
+      : safeArray(summary.recent_events);
+
+  return {
+    protocol: safeText(cortex.protocol, 'Cortex Protocol'),
+    summary,
+    summaryNote: safeText(summary.note),
+    summaryStatus: safeText(summary.status),
+    version: safeText(summary.version ?? cortex.version),
+    enabled: summary.enabled ?? cortex.enabled,
+    activeCapsules: summary.active_capsules ?? summary.active_tasks ?? cortex.active_capsules,
+    committedCapsules: summary.committed_capsules ?? cortex.committed_capsules,
+    recentEventCount: typeof summary.recent_events === 'number' ? summary.recent_events : null,
+    recentPipelineCount: typeof summary.recent_pipelines === 'number' ? summary.recent_pipelines : null,
+    recentPipelines,
+    recentEvents,
+    layers: safeLayers(cortex),
+    routingPolicy: cortex.routing_policy ?? cortex.routing,
+    safetyPolicy: cortex.safety_policy ?? cortex.safety,
+    raw: cortex,
+  };
 }
 
 export default function PipelineStudio() {
@@ -43,7 +76,7 @@ export default function PipelineStudio() {
     engineTaskStore.refreshList().catch(() => {});
   }, []);
 
-  const taskList = Array.isArray(tasks) ? tasks : [];
+  const taskList = safeArray(tasks);
   const recentTasks = useMemo(() => taskList.slice(0, 12), [taskList]);
 
   useEffect(() => {
@@ -57,7 +90,7 @@ export default function PipelineStudio() {
   const raw = record?.raw && typeof record.raw === 'object' ? record.raw : {};
   const steps = safeSteps(raw);
   const results = safeResults(raw);
-  const resultByStep = buildResultByStepId(results);
+  const resultByStepId = buildResultByStepId(results);
   const selectedTask = taskList.find((t) => String(t?.id) === String(selectedId));
 
   const cortexQuery = useQuery({
@@ -67,11 +100,23 @@ export default function PipelineStudio() {
     staleTime: 60_000,
   });
 
-  const cortex = cortexQuery.data?.cortex && typeof cortexQuery.data.cortex === 'object'
-    ? cortexQuery.data.cortex
-    : {};
+  const cortexRaw =
+    cortexQuery.data?.cortex && typeof cortexQuery.data.cortex === 'object'
+      ? cortexQuery.data.cortex
+      : {};
+  const cortexView = useMemo(() => normalizeCortexView(cortexRaw), [cortexRaw]);
   const cortexFallback = Boolean(cortexQuery.data?.fallback);
   const showEmptyCta = recentTasks.length === 0 && !cortexQuery.isLoading;
+
+  const routingItems = useMemo(() => {
+    const fromPolicy = safeStringList(cortexView.routingPolicy);
+    if (fromPolicy.length) return fromPolicy;
+    return safeLayers(cortexRaw)
+      .map((layer) => (typeof layer === 'object' ? safeText(layer?.description) : safeText(layer)))
+      .filter((s) => s && s !== '—');
+  }, [cortexView.routingPolicy, cortexRaw]);
+
+  const safetyItems = useMemo(() => safeStringList(cortexView.safetyPolicy), [cortexView.safetyPolicy]);
 
   if (showEmptyCta) {
     return (
@@ -88,16 +133,11 @@ export default function PipelineStudio() {
           >
             Go to Dashboard <ArrowRight className="w-4 h-4" />
           </Link>
-          <CortexProtocolPanel cortex={cortex} fallback={cortexFallback} className="mt-10 text-left" />
+          <CortexProtocolPanel view={cortexView} fallback={cortexFallback} className="mt-10 text-left" />
         </div>
       </div>
     );
   }
-
-  const routingItems =
-    safeStringList(cortex.routing).length > 0
-      ? safeStringList(cortex.routing)
-      : safeLayers(cortex).map((l) => (typeof l === 'object' ? l?.description : String(l))).filter(Boolean);
 
   return (
     <div data-testid="pipeline-studio-page" className="min-h-screen p-6 lg:p-8">
@@ -132,14 +172,14 @@ export default function PipelineStudio() {
                           : 'border-white/[0.06] bg-white/[0.02] text-white/60 hover:bg-white/[0.04]',
                       )}
                     >
-                      <p className="font-medium truncate">{task.title || task.goal || id}</p>
-                      <p className="text-[10px] text-white/35 mt-0.5 capitalize">{task.status || '—'}</p>
+                      <p className="font-medium truncate">{safeText(task.title || task.goal, id)}</p>
+                      <p className="text-[10px] text-white/35 mt-0.5 capitalize">{safeText(task.status)}</p>
                     </button>
                   );
                 })}
               </div>
             </div>
-            <CortexProtocolPanel cortex={cortex} fallback={cortexFallback} />
+            <CortexProtocolPanel view={cortexView} fallback={cortexFallback} />
           </div>
 
           <div className="lg:col-span-2 space-y-4">
@@ -148,7 +188,7 @@ export default function PipelineStudio() {
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                   <div>
                     <p className="text-xs text-white/40">Prompt / goal</p>
-                    <p className="text-sm text-white mt-1">{selectedTask.goal || selectedTask.title || '—'}</p>
+                    <p className="text-sm text-white mt-1">{safeText(selectedTask.goal || selectedTask.title)}</p>
                   </div>
                   {selectedId && (
                     <Link
@@ -167,7 +207,7 @@ export default function PipelineStudio() {
                     {steps.map((step, i) => {
                       if (!step || typeof step !== 'object') return null;
                       const sid = String(step.step_id ?? step.id ?? i);
-                      const result = resultByStep.get(sid);
+                      const result = resultByStepId.get(sid);
                       return (
                         <div
                           key={`${sid}-${i}`}
@@ -179,19 +219,19 @@ export default function PipelineStudio() {
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap gap-2 text-[11px] text-white/45 mb-1">
                               <span className="font-mono">{sid}</span>
-                              <span className="capitalize">{step.status || '—'}</span>
-                              {step.model && <span>model: {String(step.model)}</span>}
-                              {step.tool && <span>tool: {String(step.tool)}</span>}
-                              {step.action && <span>action: {String(step.action)}</span>}
+                              <span className="capitalize">{safeText(step.status)}</span>
+                              {step.model != null && <span>model: {safeText(step.model)}</span>}
+                              {step.tool != null && <span>tool: {safeText(step.tool)}</span>}
+                              {step.action != null && <span>action: {safeText(step.action)}</span>}
                             </div>
                             <p className="text-sm text-white/75">
-                              {step.description || step.name || step.prompt || '—'}
+                              {safeText(step.description || step.name || step.prompt)}
                             </p>
                             {result && (
                               <p className="text-xs text-emerald-300/70 mt-2 line-clamp-3">
                                 {typeof result.output === 'string'
                                   ? result.output
-                                  : result.message || result.summary || 'Step completed'}
+                                  : safeText(result.message || result.summary, 'Step completed')}
                               </p>
                             )}
                             <div className="flex gap-3 mt-2 text-[10px] text-white/30">
@@ -227,9 +267,13 @@ export default function PipelineStudio() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Panel icon={GitBranch} title="Routing notes" items={routingItems} />
-              <Panel icon={Shield} title="Safety gates" items={safeStringList(cortex.safety)} />
+              <PolicyPanel icon={GitBranch} title="Routing policy" policy={cortexView.routingPolicy} items={routingItems} />
+              <PolicyPanel icon={Shield} title="Safety policy" policy={cortexView.safetyPolicy} items={safetyItems} />
             </div>
+
+            {cortexView.recentPipelines.length > 0 && (
+              <RecentPipelinesPanel pipelines={cortexView.recentPipelines} />
+            )}
           </div>
         </div>
       </div>
@@ -237,47 +281,160 @@ export default function PipelineStudio() {
   );
 }
 
-function CortexProtocolPanel({ cortex, fallback, className = '' }) {
-  const layers = safeLayers(cortex);
+function CortexProtocolPanel({ view, fallback, className = '' }) {
+  const summary = view?.summary ?? {};
+  const hasSummaryObject = summary && typeof summary === 'object' && Object.keys(summary).length > 0;
+  const summaryIsString = typeof view?.raw?.summary === 'string';
+  const layers = view?.layers ?? [];
+
   return (
     <div className={cn('rounded-xl border border-white/[0.06] bg-white/[0.02] p-4', className)}>
       <p className="text-xs font-medium text-white/50 mb-2">
-        {cortex.protocol || 'Cortex Protocol'}
+        {view?.protocol || 'Cortex Protocol'}
         {fallback && <span className="text-white/25 ml-2">(static)</span>}
       </p>
-      <p className="text-xs text-white/45 leading-relaxed mb-3">
-        {cortex.summary || 'Observable multi-step execution with approval gates.'}
-      </p>
+
+      {summaryIsString ? (
+        <p className="text-xs text-white/45 leading-relaxed mb-3">{view.raw.summary}</p>
+      ) : hasSummaryObject ? (
+        <CortexSummaryFields view={view} className="mb-3" />
+      ) : (
+        <p className="text-xs text-white/45 leading-relaxed mb-3">
+          Observable multi-step execution with approval gates.
+        </p>
+      )}
+
       {layers.slice(0, 4).map((layer, i) => {
-        const name = typeof layer === 'object' && layer ? layer.name : `Layer ${i + 1}`;
-        const desc = typeof layer === 'object' && layer ? layer.description : String(layer ?? '');
+        const name = typeof layer === 'object' && layer ? safeText(layer.name, `Layer ${i + 1}`) : `Layer ${i + 1}`;
+        const desc =
+          typeof layer === 'object' && layer ? safeText(layer.description) : safeText(layer);
         return (
           <div key={`${name}-${i}`} className="text-[11px] text-white/40 mb-1.5">
-            <span className="text-white/60">{name}:</span> {desc || '—'}
+            <span className="text-white/60">{name}:</span> {desc}
           </div>
         );
       })}
+
+      {import.meta.env.DEV && <SafeJsonBlock value={view?.raw} className="mt-3" />}
     </div>
   );
 }
 
-function Panel({ icon: Icon, title, items }) {
-  const list = Array.isArray(items) ? items.filter(Boolean) : [];
+function CortexSummaryFields({ view, className = '' }) {
+  const enabledLabel =
+    view.enabled === true ? 'Yes' : view.enabled === false ? 'No' : safeText(view.enabled);
+
+  return (
+    <dl className={cn('grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-[11px]', className)}>
+      {view.version !== '—' && (
+        <>
+          <dt className="text-white/35">Version</dt>
+          <dd className="text-white/60">{view.version}</dd>
+        </>
+      )}
+      {view.enabled != null && (
+        <>
+          <dt className="text-white/35">Enabled</dt>
+          <dd className="text-white/60">{enabledLabel}</dd>
+        </>
+      )}
+      {view.summaryStatus !== '—' && (
+        <>
+          <dt className="text-white/35">Status</dt>
+          <dd className="text-white/60">{view.summaryStatus}</dd>
+        </>
+      )}
+      {view.activeCapsules != null && (
+        <>
+          <dt className="text-white/35">Active capsules</dt>
+          <dd className="text-white/60">{safeText(view.activeCapsules)}</dd>
+        </>
+      )}
+      {view.committedCapsules != null && (
+        <>
+          <dt className="text-white/35">Committed capsules</dt>
+          <dd className="text-white/60">{safeText(view.committedCapsules)}</dd>
+        </>
+      )}
+      {view.recentEventCount != null && (
+        <>
+          <dt className="text-white/35">Recent events</dt>
+          <dd className="text-white/60">{view.recentEventCount}</dd>
+        </>
+      )}
+      {view.recentPipelineCount != null && (
+        <>
+          <dt className="text-white/35">Recent pipelines</dt>
+          <dd className="text-white/60">{view.recentPipelineCount}</dd>
+        </>
+      )}
+      {view.summaryNote !== '—' && (
+        <>
+          <dt className="text-white/35">Note</dt>
+          <dd className="text-white/60 col-span-1">{view.summaryNote}</dd>
+        </>
+      )}
+    </dl>
+  );
+}
+
+function PolicyPanel({ icon: Icon, title, policy, items }) {
+  const rows = useMemo(() => policyRows(policy), [policy]);
+  const list = safeArray(items).filter(Boolean);
+
   return (
     <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
       <div className="flex items-center gap-2 mb-3">
         <Icon className="w-4 h-4 text-amber-400/80" />
         <p className="text-xs font-medium text-white/50">{title}</p>
       </div>
+
+      {rows.length > 0 && typeof policy === 'object' && !Array.isArray(policy) ? (
+        <dl className="space-y-1.5 mb-3">
+          {rows.map(({ key, value }) => (
+            <div key={key} className="text-[11px]">
+              <span className="text-white/35 font-mono">{key.replace(/_/g, ' ')}: </span>
+              <span className="text-white/55">{value}</span>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+
       {list.length ? (
         <ul className="space-y-1.5 text-[11px] text-white/45">
           {list.map((item, i) => (
-            <li key={i}>• {typeof item === 'string' ? item : item?.description || item?.name || '—'}</li>
+            <li key={i}>• {safeText(item)}</li>
           ))}
         </ul>
-      ) : (
+      ) : rows.length === 0 ? (
         <p className="text-[11px] text-white/25">No data from Engine yet.</p>
-      )}
+      ) : null}
+    </div>
+  );
+}
+
+function RecentPipelinesPanel({ pipelines }) {
+  const list = safeArray(pipelines);
+  if (!list.length) return null;
+
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+      <p className="text-xs font-medium text-white/50 mb-3">Recent pipelines (Engine)</p>
+      <div className="space-y-2 max-h-64 overflow-auto">
+        {list.map((pipe, i) => {
+          if (!pipe || typeof pipe !== 'object') return null;
+          const id = safeText(pipe.task_id || pipe.pipeline_id, `pipeline-${i}`);
+          return (
+            <div key={id} className="py-2 border-b border-white/[0.04] last:border-0">
+              <p className="text-[11px] text-white/70 truncate">{safeText(pipe.prompt)}</p>
+              <p className="text-[10px] text-white/35 mt-0.5">
+                {safeText(pipe.status)} · {safeText(pipe.step_count)} steps
+                {pipe.completed_at ? ` · ${safeText(pipe.completed_at)}` : ''}
+              </p>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
