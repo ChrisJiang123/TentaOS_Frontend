@@ -1,5 +1,6 @@
 import React from 'react';
 import { TrendingDown, BarChart3 } from 'lucide-react';
+import { formatCostShort, safeNumber } from '@/lib/formatNumbers';
 
 export default function CostDashboard({ tasks = [] }) {
   const today = new Date();
@@ -10,27 +11,27 @@ export default function CostDashboard({ tasks = [] }) {
 
   const todayCost = tasks
     .filter(t => new Date(t.created_date) >= startOfDay)
-    .reduce((s, t) => s + (t.actual_cost || 0), 0);
+    .reduce((s, t) => s + safeNumber(t.actual_cost), 0);
 
   const weekCost = tasks
     .filter(t => new Date(t.created_date) >= startOfWeek)
-    .reduce((s, t) => s + (t.actual_cost || 0), 0);
+    .reduce((s, t) => s + safeNumber(t.actual_cost), 0);
 
   const monthCost = tasks
     .filter(t => new Date(t.created_date) >= startOfMonth)
-    .reduce((s, t) => s + (t.actual_cost || 0), 0);
+    .reduce((s, t) => s + safeNumber(t.actual_cost), 0);
 
-  const totalTokens = tasks.reduce((s, t) => s + (t.tokens_used || 0), 0);
+  const totalTokens = tasks.reduce((s, t) => s + safeNumber(t.tokens_used), 0);
 
   // Model usage breakdown
   const modelUsage = {};
   tasks.forEach(t => {
     (t.workflow_nodes || []).forEach(n => {
-      if (n.model && n.cost > 0) {
+      if (n.model && safeNumber(n.cost) > 0) {
         const key = n.model.split('/').pop();
         if (!modelUsage[key]) modelUsage[key] = { cost: 0, tokens: 0, count: 0 };
-        modelUsage[key].cost += n.cost;
-        modelUsage[key].tokens += (n.tokens || 0);
+        modelUsage[key].cost += safeNumber(n.cost);
+        modelUsage[key].tokens += safeNumber(n.tokens);
         modelUsage[key].count += 1;
       }
     });
@@ -56,15 +57,15 @@ export default function CostDashboard({ tasks = [] }) {
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="bg-white/[0.03] rounded-lg p-3">
           <p className="text-[10px] text-white/40">今日</p>
-          <p className="text-lg font-semibold text-white mt-0.5">${todayCost.toFixed(3)}</p>
+          <p className="text-lg font-semibold text-white mt-0.5">{formatCostShort(todayCost, 3)}</p>
         </div>
         <div className="bg-white/[0.03] rounded-lg p-3">
           <p className="text-[10px] text-white/40">本周</p>
-          <p className="text-lg font-semibold text-white mt-0.5">${weekCost.toFixed(3)}</p>
+          <p className="text-lg font-semibold text-white mt-0.5">{formatCostShort(weekCost, 3)}</p>
         </div>
         <div className="bg-white/[0.03] rounded-lg p-3">
           <p className="text-[10px] text-white/40">本月</p>
-          <p className="text-lg font-semibold text-white mt-0.5">${monthCost.toFixed(2)}</p>
+          <p className="text-lg font-semibold text-white mt-0.5">{formatCostShort(monthCost, 2)}</p>
         </div>
       </div>
 
@@ -80,7 +81,7 @@ export default function CostDashboard({ tasks = [] }) {
                 <div className="flex-1 h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
                   <div className="h-full bg-cyan-500/50 rounded-full" style={{ width: `${pct}%` }} />
                 </div>
-                <span className="text-[10px] text-white/40 w-14 text-right">${data.cost.toFixed(3)}</span>
+                <span className="text-[10px] text-white/40 w-14 text-right">{formatCostShort(data.cost, 3)}</span>
               </div>
             );
           })}
@@ -93,7 +94,7 @@ export default function CostDashboard({ tasks = [] }) {
           <TrendingDown className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-[11px] text-emerald-400">
-              全用最便宜的模型，本月可省 ~${potentialSaving.toFixed(2)}
+              全用最便宜的模型，本月可省 ~{formatCostShort(potentialSaving, 2)}
             </p>
             <p className="text-[10px] text-white/25 mt-0.5">使用 DeepSeek 替代高价模型</p>
           </div>

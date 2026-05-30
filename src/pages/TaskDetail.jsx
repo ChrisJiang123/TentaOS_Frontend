@@ -119,7 +119,7 @@ function TaskDetailBody({ taskId, task, record, debug, listDebug, loadState, loa
         </div>
 
         <div className="flex flex-wrap gap-3 mb-6 text-xs">
-          <span className={cn('px-3 py-1.5 rounded-lg capitalize font-medium', statusColors[task.status])}>
+          <span className={cn('px-3 py-1.5 rounded-lg capitalize font-medium', statusColors[task.status] || statusColors.queued)}>
             {raw.status || task.status}
           </span>
           <MetaChip label="id" value={backendId || '—'} />

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Cpu, DollarSign } from 'lucide-react';
-
+import { formatCost } from '@/lib/formatNumbers';
 export default function EngineCurrentMetrics({ tasks = [] }) {
   const active = tasks.find((t) =>
     ['running', 'planning', 'queued', 'awaiting_approval'].includes(t.status),
@@ -16,7 +16,7 @@ export default function EngineCurrentMetrics({ tasks = [] }) {
       </span>
       <span className="flex items-center gap-1.5 tabular-nums">
         <DollarSign className="w-3.5 h-3.5 text-cyan-400" />
-        成本: ${(active.actual_cost || 0).toFixed(4)}
+        成本: {formatCost(active.actual_cost)}
       </span>
       <span className="text-white/30 truncate max-w-[200px]">{active.title}</span>
     </div>

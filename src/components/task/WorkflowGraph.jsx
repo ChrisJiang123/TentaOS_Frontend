@@ -1,6 +1,7 @@
 import React from 'react';
 import { CheckCircle2, Loader2, Clock, AlertTriangle, ArrowRight, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatDurationSeconds } from '@/lib/formatNumbers';
 import { motion } from 'framer-motion';
 
 const statusStyles = {
@@ -53,8 +54,10 @@ export default function WorkflowGraph({ nodes = [], onNodeClick }) {
                   </div>
                   <span className="text-[10px] text-white/40">{node.agent}</span>
                 </div>
-                {node.duration_ms > 0 && (
-                  <p className="text-[10px] text-white/25 mt-1.5">{(node.duration_ms / 1000).toFixed(1)}s · {node.tokens} tok</p>
+                {Number(node.duration_ms) > 0 && (
+                  <p className="text-[10px] text-white/25 mt-1.5">
+                    {formatDurationSeconds(node.duration_ms)} · {node.tokens ?? '—'} tok
+                  </p>
                 )}
               </motion.button>
               {i < nodes.length - 1 && (

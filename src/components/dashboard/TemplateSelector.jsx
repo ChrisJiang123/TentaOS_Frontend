@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Newspaper, Search, FileText, Mail, Code2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { formatCostShort } from '@/lib/formatNumbers';
 import { motion } from 'framer-motion';
 
 const TEMPLATES = [
@@ -159,7 +160,7 @@ export default function TemplateSelector({ onSelect, isSubmitting = false }) {
             <div className="flex items-center gap-2 text-[10px] text-white/25">
               <span>{t.pipeline.steps.length} 步</span>
               <span>·</span>
-              <span>~${t.pipeline.total_estimated_cost_usd.toFixed(3)}</span>
+              <span>~{formatCostShort(t.pipeline.total_estimated_cost_usd, 3)}</span>
               <span>·</span>
               <span>~{Math.round(t.pipeline.estimated_duration_seconds / 60)}分钟</span>
             </div>
@@ -189,7 +190,7 @@ export default function TemplateSelector({ onSelect, isSubmitting = false }) {
           </div>
           <div className="flex items-center justify-between mt-3">
             <span className="text-[10px] text-white/25">
-              {selected.pipeline.steps.length} 步 · 预估 ${selected.pipeline.total_estimated_cost_usd.toFixed(3)} · ~{Math.round(selected.pipeline.estimated_duration_seconds / 60)} 分钟
+              {selected.pipeline.steps.length} 步 · 预估 {formatCostShort(selected.pipeline.total_estimated_cost_usd, 3)} · ~{Math.round(selected.pipeline.estimated_duration_seconds / 60)} 分钟
             </span>
             <Button
               onClick={handleLaunch}
