@@ -74,19 +74,47 @@ function extractSteps(api) {
   return [];
 }
 
-export function stepsToWorkflowNodes(steps) {
-  return steps.map((s, i) => ({
-    id: s.id || s.step_id || `step-${i}`,
-    agent: s.agent || s.role || 'Agent',
-    label:
-      s.label ||
-      s.name ||
-      s.title ||
-      (typeof s.task === 'string' ? s.task.slice(0, 48) : null) ||
-      s.description ||
-      `Step ${i + 1}`,
-    status: mapStepStatus(s.status),
-  }));
+/** Map step_id -> result row (duration_ms often lives in results, not steps). */
+export function buildResultByStepId(results) {
+  const list = Array.isArray(results) ? results : [];
+  const map = new Map();
+  for (const r of list) {
+    if (!r || typeof r !== 'object') continue;
+    const key = r.step_id ?? r.stepId ?? r.id;
+    if (key != null) map.set(String(key), r);
+  }
+  return map;
+}
+
+export function stepsToWorkflowNodes(steps, resultByStepId = new Map()) {
+  return steps.map((s, i) => {
+    const stepId = String(s.step_id ?? s.id ?? `step-${i}`);
+    const result = resultByStepId.get(stepId) ?? resultByStepId.get(String(s.id));
+    const durationRaw = s.duration_ms ?? result?.duration_ms;
+    const costRaw = s.cost ?? s.cost_usd ?? result?.cost ?? result?.cost_usd;
+    const tokensRaw = s.tokens ?? s.tokens_used ?? result?.tokens ?? result?.tokens_used;
+    const duration_ms = Number(durationRaw);
+    const cost = Number(costRaw);
+    const tokens = Number(tokensRaw);
+
+    return {
+      id: s.id || s.step_id || `step-${i}`,
+      step_id: stepId,
+      agent: s.agent || s.role || 'Agent',
+      label:
+        s.label ||
+        s.name ||
+        s.title ||
+        (typeof s.task === 'string' ? s.task.slice(0, 48) : null) ||
+        s.description ||
+        `Step ${i + 1}`,
+      status: mapStepStatus(s.status),
+      duration_ms: Number.isFinite(duration_ms) ? duration_ms : undefined,
+      cost: Number.isFinite(cost) ? cost : undefined,
+      tokens: Number.isFinite(tokens) ? tokens : undefined,
+      error_message: s.error ?? s.error_message ?? result?.error,
+    };
+  });
 }
 
 function applyProgressToNodes(nodes, stepsCompleted, stepsTotal, taskStatus) {
@@ -128,7 +156,8 @@ export function normalizeEngineTask(api, meta = {}) {
   const title = (goal && goal.slice(0, 80)) || `任务 ${id}`;
 
   const stepRecords = extractSteps(raw);
-  const fromApi = stepsToWorkflowNodes(stepRecords);
+  const resultByStepId = buildResultByStepId(raw?.results);
+  const fromApi = stepsToWorkflowNodes(stepRecords, resultByStepId);
   const fromPipeline =
     meta.pipeline?.steps?.map((s, i) => ({
       id: s.step_id || `p-${i}`,
@@ -142,13 +171,17 @@ export function normalizeEngineTask(api, meta = {}) {
 
   const completedFromSteps = countCompletedSteps(stepRecords);
   const steps_completed = Number(
-    raw?.steps_completed ??
+    raw?.completed_steps ??
+      raw?.steps_completed ??
       raw?.progress?.completed ??
       completedFromSteps ??
       (status === 'completed' ? workflow_nodes.length : 0),
   );
   const steps_total = Number(
-    (raw?.steps_total ?? raw?.progress?.total ?? workflow_nodes.length) || 0,
+    (raw?.total_steps ??
+      raw?.steps_total ??
+      raw?.progress?.total ??
+      workflow_nodes.length) || 0,
   );
 
   workflow_nodes = applyProgressToNodes(
@@ -171,7 +204,7 @@ export function normalizeEngineTask(api, meta = {}) {
     status,
     steps_completed,
     steps_total: steps_total || workflow_nodes.length,
-    actual_cost: Number(raw?.actual_cost ?? raw?.cost ?? raw?.total_cost ?? 0),
+    actual_cost: Number(raw?.total_cost ?? raw?.actual_cost ?? raw?.cost ?? 0) || 0,
     tokens_used: Number(raw?.tokens_used ?? raw?.tokens ?? raw?.token_count ?? 0),
     workflow_nodes,
     created_date: meta.created_date || raw?.created_at || raw?.created_date || new Date().toISOString(),

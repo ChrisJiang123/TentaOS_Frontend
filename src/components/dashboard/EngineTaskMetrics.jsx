@@ -1,5 +1,6 @@
 import React from 'react';
 import { Cpu, DollarSign } from 'lucide-react';
+import { formatCost } from '@/lib/formatNumbers';
 
 /** 当前（优先运行中）引擎任务的成本与 token */
 export default function EngineTaskMetrics({ tasks = [] }) {
@@ -17,7 +18,7 @@ export default function EngineTaskMetrics({ tasks = [] }) {
       <span className="text-[11px] text-white/40">当前任务指标</span>
       <span className="flex items-center gap-1.5 text-xs text-cyan-400/90">
         <DollarSign className="w-3.5 h-3.5" />
-        ${Number(cost).toFixed(4)}
+        {formatCost(cost)}
       </span>
       <span className="flex items-center gap-1.5 text-xs text-purple-400/90">
         <Cpu className="w-3.5 h-3.5" />

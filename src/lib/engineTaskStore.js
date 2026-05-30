@@ -130,8 +130,11 @@ class EngineTaskStore {
 
   /** Load GET /api/tasks and merge into store. */
   async refreshList() {
-    this.listDebug = { ...this.listDebug, loading: true, error: null };
-    this._notify();
+    const isInitialLoad = !this.listDebug.lastFetchAt;
+    if (isInitialLoad) {
+      this.listDebug = { ...this.listDebug, loading: true, error: null };
+      this._notify();
+    }
 
     try {
       const meta = await engineClient.fetchTasksList();

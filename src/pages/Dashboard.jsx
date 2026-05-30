@@ -16,6 +16,7 @@ import TemplateSelector from '../components/dashboard/TemplateSelector';
 import StepStream from '../components/dashboard/StepStream';
 import EngineTaskMetrics from '../components/dashboard/EngineTaskMetrics';
 import EngineTaskDebugPanel from '../components/debug/EngineTaskDebugPanel';
+import TaskPanelErrorBoundary from '../components/debug/TaskPanelErrorBoundary';
 import { useLanguage } from '@/lib/LanguageContext';
 import engineClient from '@/lib/engineClient';
 import ConnectionGate from '../components/engine/ConnectionGate';
@@ -112,13 +113,14 @@ export default function Dashboard() {
                   {health.pending_approvals != null && ` · 待审批 ${health.pending_approvals}`}
                 </p>
               )}
-              {listDebug.loading && (
+              {listDebug.loading && !listDebug.lastFetchAt && (
                 <p className="text-[11px] text-white/25 mt-1">Loading tasks from Engine…</p>
               )}
             </div>
             <ConnectionIndicator />
           </div>
 
+          <TaskPanelErrorBoundary title="Dashboard task panel render error">
           <div className="mb-6">
             <StatsBar tasks={tasks} approvals={syntheticApprovals} />
           </div>
@@ -205,6 +207,7 @@ export default function Dashboard() {
               <AgentSidebar agents={agents} />
             </div>
           </div>
+          </TaskPanelErrorBoundary>
         </div>
 
         <ApprovalDialog />

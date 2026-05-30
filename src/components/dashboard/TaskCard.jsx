@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CheckCircle2, Loader2, Clock, Pause, XCircle, ArrowRight, Bot, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { formatCostShort } from '@/lib/formatNumbers';
 import { formatDistanceToNow } from 'date-fns';
 
 const statusConfig = {
@@ -76,7 +77,7 @@ export default function TaskCard({ task }) {
             </span>
           )}
           <span className="text-white/20 ml-auto flex items-center gap-2">
-            {task.actual_cost > 0 && <span>${task.actual_cost.toFixed(2)}</span>}
+            {Number(task.actual_cost) > 0 && <span>{formatCostShort(task.actual_cost, 2)}</span>}
             {timeAgo && <span>{timeAgo}</span>}
           </span>
         </div>

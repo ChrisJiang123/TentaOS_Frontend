@@ -1,5 +1,6 @@
 import React from 'react';
 import { Activity, CheckCircle2, DollarSign, XCircle, Zap, Shield } from 'lucide-react';
+import { formatNumber, formatCostShort } from '@/lib/formatNumbers';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -9,16 +10,27 @@ export default function StatsBar({ tasks = [], approvals = [] }) {
   const completed = tasks.filter(t => t.status === 'completed').length;
   const failed = tasks.filter(t => t.status === 'failed').length;
   const pending = approvals.filter(a => a.status === 'pending').length;
-  const totalCost = tasks.reduce((sum, t) => sum + (t.actual_cost || 0), 0);
-  const totalTokens = tasks.reduce((sum, t) => sum + (t.tokens_used || 0), 0);
+  const totalCost = tasks.reduce((sum, t) => sum + (Number(t.actual_cost) || 0), 0);
+  const totalTokens = tasks.reduce((sum, t) => sum + (Number(t.tokens_used) || 0), 0);
 
   const stats = [
     { label: 'Active', value: String(running), icon: Activity, color: 'text-blue-400', bg: 'bg-blue-500/10', pulse: running > 0 },
     { label: 'Completed', value: String(completed), icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
     { label: 'Approvals', value: String(pending + awaitingApproval), icon: Shield, color: 'text-amber-400', bg: 'bg-amber-500/10', pulse: (pending + awaitingApproval) > 0 },
     { label: 'Failed', value: String(failed), icon: XCircle, color: 'text-red-400', bg: 'bg-red-500/10', hide: failed === 0 },
-    { label: 'Tokens', value: totalTokens > 1000000 ? `${(totalTokens / 1000000).toFixed(1)}M` : totalTokens > 1000 ? `${(totalTokens / 1000).toFixed(0)}K` : String(totalTokens), icon: Zap, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { label: 'Cost', value: `$${totalCost.toFixed(2)}`, icon: DollarSign, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
+    {
+      label: 'Tokens',
+      value:
+        totalTokens > 1000000
+          ? `${formatNumber(totalTokens / 1000000, 1)}M`
+          : totalTokens > 1000
+            ? `${formatNumber(totalTokens / 1000, 0)}K`
+            : String(totalTokens),
+      icon: Zap,
+      color: 'text-purple-400',
+      bg: 'bg-purple-500/10',
+    },
+    { label: 'Cost', value: formatCostShort(totalCost, 2), icon: DollarSign, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
   ];
 
   const visibleStats = stats.filter(s => !s.hide);

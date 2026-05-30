@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ENGINE_URL, WS_URL, setEngineUrl, clearEngineUrl, hasEngineOverride } from '@/config';
 import engineClient from '@/lib/engineClient';
 import { Loader2, Plug, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
@@ -16,14 +16,20 @@ export default function ConnectionGate({ children, onConnected }) {
   const isHttpEngine = ENGINE_URL.startsWith('http://');
   const mixedContentRisk = isHttpsPage && isHttpEngine;
 
+  const connectedNotified = useRef(false);
+
   const probe = useCallback(async () => {
     setProbing(true);
     try {
       await engineClient.getHealth();
       setStatus('connected');
-      onConnected?.();
+      if (!connectedNotified.current) {
+        connectedNotified.current = true;
+        onConnected?.();
+      }
     } catch {
       setStatus('offline');
+      connectedNotified.current = false;
     } finally {
       setProbing(false);
     }

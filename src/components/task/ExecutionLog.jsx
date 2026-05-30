@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Brain, Wrench, FileText, AlertCircle, Shield, ChevronDown, Clock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { formatCost } from '@/lib/formatNumbers';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 
@@ -24,7 +24,7 @@ function LogEntry({ entry, index, isLast }) {
   const config = typeConfig[entry.type] || typeConfig.info;
   const Icon = config.icon;
   const isLong = entry.detail && entry.detail.length > 120;
-  const hasMetadata = entry.model || entry.tokens > 0 || entry.cost > 0 || entry.fallback;
+  const hasMetadata = entry.model || (Number(entry.tokens) > 0) || (Number(entry.cost) > 0) || entry.fallback;
 
   return (
     <motion.div
@@ -67,8 +67,8 @@ function LogEntry({ entry, index, isLast }) {
         {hasMetadata && (
           <div className="flex items-center gap-3 mt-1.5 text-[10px] text-white/25">
             {entry.model && <span className="px-1.5 py-0.5 rounded bg-white/[0.04]">{entry.model}</span>}
-            {entry.tokens > 0 && <span>{entry.tokens} tok</span>}
-            {entry.cost > 0 && <span className="text-emerald-400/60">${entry.cost.toFixed(4)}</span>}
+            {Number(entry.tokens) > 0 && <span>{entry.tokens} tok</span>}
+            {Number(entry.cost) > 0 && <span className="text-emerald-400/60">{formatCost(entry.cost)}</span>}
             {entry.fallback && <span className="text-amber-400/60">⚠ {entry.fallback}</span>}
           </div>
         )}

@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckCircle2, Loader2, Clock, XCircle, ArrowRight, Shield, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { formatCost, formatDurationSeconds } from '@/lib/formatNumbers';
 
 const statusStyles = {
   completed: { icon: CheckCircle2, ring: 'ring-emerald-500/30', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
@@ -68,9 +69,9 @@ export default function LiveStepView({ nodes = [] }) {
                 </div>
                 {node.status === 'completed' && (
                   <div className="flex items-center gap-2 mt-2 text-[9px] text-white/25">
-                    <span>{(node.duration_ms / 1000).toFixed(1)}s</span>
-                    <span>{node.tokens} tok</span>
-                    <span className="text-emerald-400/60">${node.cost.toFixed(4)}</span>
+                    <span>{formatDurationSeconds(node.duration_ms)}</span>
+                    <span>{node.tokens != null ? `${node.tokens} tok` : '— tok'}</span>
+                    <span className="text-emerald-400/60">{formatCost(node.cost)}</span>
                   </div>
                 )}
                 {node.status === 'failed' && node.error_message && (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, CheckCircle2, XCircle, DollarSign, Cpu, Eye } from 'lucide-react';
+import { formatCostShort } from '@/lib/formatNumbers';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -77,7 +78,7 @@ export default function LivePipelineCard({ task }) {
         </div>
         <div className="flex items-center gap-3 text-white/30">
           <span className="flex items-center gap-1"><Cpu className="w-3 h-3" /> {(task.tokens_used || 0).toLocaleString()}</span>
-          <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> ${(task.actual_cost || 0).toFixed(3)}</span>
+          <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> {formatCostShort(task.actual_cost, 3)}</span>
         </div>
       </div>
     </motion.div>

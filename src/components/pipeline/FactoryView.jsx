@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckCircle2, Loader2, Clock, AlertTriangle, ArrowRight, Cpu, Zap, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { formatCost, formatCostShort, formatDurationSeconds } from '@/lib/formatNumbers';
 
 const statusConfig = {
   pending: { icon: Clock, color: 'text-white/30', bg: 'border-white/10', ringColor: '' },
@@ -62,10 +63,10 @@ function StepNode({ node, index }) {
             <Zap className="w-3 h-3" /> {node.tokens || 0}
           </span>
           <span className="flex items-center gap-1">
-            <DollarSign className="w-3 h-3" /> ${(node.cost || 0).toFixed(4)}
+            <DollarSign className="w-3 h-3" /> {formatCost(node.cost)}
           </span>
           <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3" /> {((node.duration_ms || 0) / 1000).toFixed(1)}s
+            <Clock className="w-3 h-3" /> {formatDurationSeconds(node.duration_ms)}
           </span>
         </div>
       )}
@@ -113,11 +114,11 @@ export default function FactoryView({ workflowNodes = [], pipelineName, estimate
           </div>
         </div>
         <div className="flex items-center gap-4 text-[11px]">
-          {estimatedCost > 0 && (
-            <span className="text-white/30">Est: ${estimatedCost.toFixed(3)}</span>
+          {Number(estimatedCost) > 0 && (
+            <span className="text-white/30">Est: {formatCostShort(estimatedCost, 3)}</span>
           )}
-          {totalCost > 0 && (
-            <span className="text-emerald-400 font-medium">Actual: ${totalCost.toFixed(4)}</span>
+          {Number(totalCost) > 0 && (
+            <span className="text-emerald-400 font-medium">Actual: {formatCost(totalCost)}</span>
           )}
           {totalTokens > 0 && (
             <span className="text-purple-400">{totalTokens.toLocaleString()} tokens</span>
