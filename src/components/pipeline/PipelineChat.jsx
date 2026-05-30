@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState, useRef } from 'react';
 import { submitEngineTask } from '@/lib/submitEngineTask';
+import { parseTaskIdFromSubmitResponse } from '@/lib/engineTaskUtils';
 import { useToast } from '@/components/ui/use-toast';
 import { Sparkles, Loader2, Play, DollarSign, Clock, Cpu, Coins, Shield, CheckCircle2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -73,7 +74,7 @@ export default function PipelineChat({
 
   const notifyEngineTask = async (text, pipelineMeta) => {
     const { res, taskId } = await submitEngineTask(text);
-    const tid = taskId ?? res?.task_id ?? res?.taskId ?? res?.id;
+    const tid = taskId ?? parseTaskIdFromSubmitResponse(res);
     if (tid && onEngineTaskSubmitted) {
       onEngineTaskSubmitted(String(tid), text, pipelineMeta);
     } else if (tid) {

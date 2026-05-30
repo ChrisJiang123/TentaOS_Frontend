@@ -1,15 +1,19 @@
 // @ts-nocheck
-import React, { useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Clock, DollarSign, Cpu, Play, Pause, XCircle, RotateCcw, Trash2, Timer } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import {
+  ArrowLeft,
+  AlertCircle,
+  FileText,
+  Loader2,
+} from 'lucide-react';
 import LiveStepView from '../components/task/LiveStepView';
 import ExecutionLog from '../components/task/ExecutionLog';
-import ArtifactList from '../components/task/ArtifactList';
-import FactoryView from '../components/pipeline/FactoryView';
+import EngineTaskDebugPanel from '../components/debug/EngineTaskDebugPanel';
 import { cn } from '@/lib/utils';
+import { useEngineTask } from '@/hooks/useEngineTasks';
+import { engineTaskStore } from '@/lib/engineTaskStore';
 
 const statusColors = {
   queued: 'bg-white/10 text-white/50',
@@ -22,248 +26,196 @@ const statusColors = {
   cancelled: 'bg-white/10 text-white/40',
 };
 
+function formatOutput(value) {
+  if (value == null) return null;
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
 export default function TaskDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const taskId = urlParams.get('id');
-  const queryClient = useQueryClient();
+  const [loadState, setLoadState] = useState('idle'); // idle | loading | ready | error | not_found
+  const [loadError, setLoadError] = useState(null);
 
-  const { data: task, isLoading } = useQuery({
-    queryKey: ['task', taskId],
-    queryFn: async () => null,
-    enabled: !!taskId,
-  });
+  const { task, record, debug, listDebug } = useEngineTask(taskId);
 
-  const { data: pipelineRun } = useQuery({
-    queryKey: ['pipelineRun', task?.workflow_id],
-    queryFn: async () => null,
-    enabled: !!task?.workflow_id,
-  });
-
-  // Real-time updates for this task
   useEffect(() => {
-    return () => {};
-  }, [taskId, queryClient]);
+    if (!taskId) return;
+    setLoadState('loading');
+    setLoadError(null);
+    engineTaskStore
+      .ensureTaskLoaded(taskId)
+      .then((rec) => {
+        if (!rec?.raw && rec?.pollError) {
+          setLoadState('not_found');
+        } else if (rec?.raw) {
+          setLoadState('ready');
+        } else {
+          setLoadState('not_found');
+        }
+      })
+      .catch((err) => {
+        setLoadError(err instanceof Error ? err.message : String(err));
+        setLoadState('error');
+      });
+  }, [taskId]);
 
-  // Real-time updates for pipeline run
-  useEffect(() => {
-    return () => {};
-  }, [task?.workflow_id, queryClient]);
-
-  if (isLoading) {
+  if (!taskId) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-white/20 border-t-blue-400 rounded-full animate-spin" />
-      </div>
+      <StateShell title="Missing task ID" message="Use /TaskDetail?id=&lt;backend_task_id&gt;">
+        <EngineTaskDebugPanel debug={debug} listDebug={listDebug} record={record} />
+      </StateShell>
     );
   }
 
-  if (!task) {
+  if (loadState === 'loading' && !task) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white/40">
-        <div className="text-center">
-          <p>Task not found</p>
-          <Link to="/Dashboard" className="text-blue-400 text-sm mt-2 block hover:underline">Back to Dashboard</Link>
-        </div>
-      </div>
+      <StateShell title="Loading task…" spinning>
+        <EngineTaskDebugPanel debug={debug} listDebug={listDebug} record={record} />
+      </StateShell>
     );
   }
 
-  const progress = task.steps_total > 0 ? (task.steps_completed / task.steps_total) * 100 : 0;
+  if (loadState === 'error') {
+    return (
+      <StateShell title="Network error" message={loadError || record?.pollError || 'Could not reach Engine'} error>
+        <EngineTaskDebugPanel debug={debug} listDebug={listDebug} record={record} />
+      </StateShell>
+    );
+  }
 
-  // Calculate duration
-  const getDuration = () => {
-    const start = task.started_at ? new Date(task.started_at) : null;
-    const end = task.completed_at ? new Date(task.completed_at) : (task.status === 'running' || task.status === 'planning' ? new Date() : null);
-    if (!start || !end) return null;
-    const seconds = Math.round((end - start) / 1000);
-    if (seconds < 60) return `${seconds}s`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
-    return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
-  };
+  if (loadState === 'not_found' && !task) {
+    return (
+      <StateShell title="Task not found or expired" message={`No data for ${taskId}`}>
+        <EngineTaskDebugPanel debug={debug} listDebug={listDebug} record={record} />
+      </StateShell>
+    );
+  }
 
-  const handleRetry = async () => {
-    // base44 已移除：本地模式不支持在此页面重试
-    queryClient.invalidateQueries({ queryKey: ['task', taskId] });
-  };
+  if (!task && loadState !== 'ready') {
+    return (
+      <StateShell title="Loading task…" spinning>
+        <EngineTaskDebugPanel debug={debug} listDebug={listDebug} record={record} />
+      </StateShell>
+    );
+  }
 
-  const handleDelete = async () => {
-    if (!window.confirm('Delete this task permanently?')) return;
-    // base44 已移除：本地模式不支持在此页面删除
-    window.location.href = '/Dashboard';
-  };
-
-  const duration = getDuration();
+  const raw = record?.raw || {};
+  const backendId = raw.task_id || raw.id || task.id;
+  const steps = raw.pipeline?.steps || [];
+  const outputText = formatOutput(raw.output ?? task.output);
+  const resultsText = formatOutput(raw.results ?? task.results);
+  const hasSteps = steps.length > 0 || (task.workflow_nodes && task.workflow_nodes.length > 0);
+  const nodes = task.workflow_nodes?.length ? task.workflow_nodes : [];
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
       className="min-h-screen p-6 lg:p-8"
     >
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Link to="/Dashboard" className="inline-flex items-center gap-2 text-white/40 hover:text-white/60 text-sm mb-4 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </Link>
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-white tracking-tight">{task.title}</h1>
-              <p className="text-sm text-white/40 mt-1 max-w-xl">{task.goal}</p>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {task.status === 'running' && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-white/10 text-white/60 hover:bg-white/5 h-8 text-xs"
-                  onClick={async () => {
-                    // base44 已移除：本地模式不支持在此页面暂停
-                    queryClient.invalidateQueries({ queryKey: ['task', taskId] });
-                  }}
-                >
-                  <Pause className="w-3 h-3 mr-1" /> Pause
-                </Button>
-              )}
-              {task.status === 'paused' && (
-                <Button
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-500 text-white h-8 text-xs"
-                  onClick={async () => {
-                    // base44 已移除：本地模式不支持在此页面恢复
-                    queryClient.invalidateQueries({ queryKey: ['task', taskId] });
-                  }}
-                >
-                  <Play className="w-3 h-3 mr-1" /> Resume
-                </Button>
-              )}
-              {task.status === 'failed' && (
-                <Button
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-500 text-white h-8 text-xs"
-                  onClick={handleRetry}
-                >
-                  <RotateCcw className="w-3 h-3 mr-1" /> Retry
-                </Button>
-              )}
-              {!['completed', 'cancelled', 'failed'].includes(task.status) && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-red-500/20 text-red-400 hover:bg-red-500/10 h-8 text-xs"
-                  onClick={async () => {
-                    // base44 已移除：本地模式不支持在此页面取消
-                    queryClient.invalidateQueries({ queryKey: ['task', taskId] });
-                  }}
-                >
-                  <XCircle className="w-3 h-3 mr-1" /> Cancel
-                </Button>
-              )}
-              {['completed', 'failed', 'cancelled'].includes(task.status) && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-white/10 text-white/30 hover:text-red-400 hover:border-red-500/20 hover:bg-red-500/10 h-8 text-xs"
-                  onClick={handleDelete}
-                >
-                  <Trash2 className="w-3 h-3 mr-1" /> Delete
-                </Button>
-              )}
-            </div>
-          </div>
+        <Link
+          to="/Dashboard"
+          className="inline-flex items-center gap-2 text-white/40 hover:text-white/60 text-sm mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Dashboard
+        </Link>
+
+        <div className="mb-6">
+          <h1 className="text-xl font-semibold text-white">{task.title}</h1>
+          <p className="text-sm text-white/40 mt-1">{task.goal}</p>
         </div>
 
-        {/* Status Bar */}
-        <div className="flex flex-wrap items-center gap-4 mb-6">
-          <span className={cn("px-3 py-1.5 rounded-lg text-xs font-medium capitalize", statusColors[task.status])}>
-            {task.status?.replace('_', ' ')}
+        <div className="flex flex-wrap gap-3 mb-6 text-xs">
+          <span className={cn('px-3 py-1.5 rounded-lg capitalize font-medium', statusColors[task.status])}>
+            {raw.status || task.status}
           </span>
-          <div className="flex items-center gap-1.5 text-xs text-white/40">
-            <Clock className="w-3.5 h-3.5" />
-            <span>{task.steps_completed}/{task.steps_total} steps</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-white/40">
-            <DollarSign className="w-3.5 h-3.5" />
-            <span>${(task.actual_cost || 0).toFixed(2)}</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-white/40">
-            <Cpu className="w-3.5 h-3.5" />
-            <span>{(task.tokens_used || 0).toLocaleString()} tokens</span>
-          </div>
-          {duration && (
-            <div className="flex items-center gap-1.5 text-xs text-white/40">
-              <Timer className="w-3.5 h-3.5" />
-              <span>{duration}</span>
-            </div>
-          )}
-          {task.steps_total > 0 && (
-            <div className="flex-1 max-w-xs">
-              <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 rounded-full transition-all"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-          )}
+          <MetaChip label="id" value={backendId} />
+          <MetaChip label="pipeline_id" value={raw.pipeline_id || '—'} />
+          <MetaChip label="steps" value={String(steps.length || nodes.length)} />
         </div>
 
-        {/* Live Step View (Pipeline Visualization) */}
-        {task.workflow_nodes && task.workflow_nodes.length > 0 && (
+        {hasSteps && nodes.length > 0 && (
           <div className="mb-6">
-            <LiveStepView nodes={task.workflow_nodes} />
+            <LiveStepView nodes={nodes} />
           </div>
         )}
 
-        {/* Factory View for running tasks */}
-        {['running', 'planning'].includes(task.status) && task.workflow_nodes && task.workflow_nodes.length > 0 && (
-          <div className="mb-6">
-            <FactoryView
-              workflowNodes={task.workflow_nodes}
-              pipelineName={task.title}
-              estimatedCost={task.estimated_cost || 0}
-              totalCost={task.actual_cost || 0}
-              totalTokens={task.tokens_used || 0}
-            />
+        {task.status === 'completed' && !hasSteps && (
+          <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-200/80">
+            Completed but no pipeline steps in response.
           </div>
         )}
 
-        {/* base44 ResultViewer/Rating 已移除 */}
-
-        {/* Execution Log & Artifacts */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-          <ExecutionLog entries={task.execution_log || task.timeline || []} />
-          <div className="space-y-6">
-            <ArtifactList artifacts={task.artifacts || []} />
-            {/* Cost Breakdown */}
-            {task.workflow_nodes && task.workflow_nodes.length > 0 && (
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
-                <h3 className="text-sm font-medium text-white/60 mb-4">Cost Breakdown</h3>
-                <div className="space-y-2">
-                  {task.workflow_nodes.filter(n => n.cost > 0).map((node) => (
-                    <div key={node.id} className="flex items-center justify-between text-xs">
-                      <div className="flex-1 min-w-0">
-                        <span className="text-white/50 truncate block">{node.agent}: {node.label}</span>
-                        {node.model && <span className="text-[10px] text-white/25">{node.model}</span>}
-                      </div>
-                      <div className="text-right flex-shrink-0 ml-3">
-                        <span className="text-white/70">${node.cost.toFixed(4)}</span>
-                        {node.tokens > 0 && <span className="text-[10px] text-white/25 block">{node.tokens} tok</span>}
-                      </div>
-                    </div>
-                  ))}
-                  <div className="border-t border-white/[0.06] pt-2 mt-2 flex items-center justify-between text-xs font-medium">
-                    <span className="text-white/60">Total</span>
-                    <span className="text-white">${(task.actual_cost || 0).toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
+        {outputText && (
+          <div className="mb-6 bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5">
+            <div className="flex items-center gap-2 text-emerald-300/90 text-sm font-medium mb-3">
+              <FileText className="w-4 h-4" />
+              Completed output
+            </div>
+            <pre className="text-xs text-white/70 whitespace-pre-wrap font-mono max-h-96 overflow-auto">
+              {outputText}
+            </pre>
           </div>
-        </div>
+        )}
+
+        {resultsText && (
+          <div className="mb-6 bg-white/[0.02] border border-white/[0.06] rounded-xl p-5">
+            <p className="text-sm font-medium text-white/60 mb-2">Results</p>
+            <pre className="text-xs text-white/60 whitespace-pre-wrap font-mono max-h-64 overflow-auto">
+              {resultsText}
+            </pre>
+          </div>
+        )}
+
+        {!outputText && !resultsText && !hasSteps && (
+          <div className="mb-6 text-sm text-white/35 rounded-xl border border-white/[0.06] p-4">
+            No steps, output, or results yet.{' '}
+            {['running', 'planning', 'queued'].includes(task.status) && 'Polling every 1–2s…'}
+          </div>
+        )}
+
+        <ExecutionLog entries={task.execution_log || raw.results || []} />
+
+        <EngineTaskDebugPanel debug={debug} listDebug={listDebug} record={record} />
       </div>
     </motion.div>
+  );
+}
+
+function MetaChip({ label, value }) {
+  return (
+    <span className="px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] text-white/45 font-mono">
+      {label}: {value}
+    </span>
+  );
+}
+
+function StateShell({ title, message, children, spinning, error }) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-6">
+      <div className="text-center max-w-md mb-6">
+        {spinning ? (
+          <Loader2 className="w-7 h-7 mx-auto mb-3 text-blue-400 animate-spin" />
+        ) : (
+          <AlertCircle
+            className={cn('w-8 h-8 mx-auto mb-3', error ? 'text-red-400/80' : 'text-amber-400/80')}
+          />
+        )}
+        <p className="text-sm text-white/70">{title}</p>
+        {message && <p className="text-xs text-white/35 mt-2">{message}</p>}
+        <Link to="/Dashboard" className="text-blue-400 text-sm mt-4 inline-block hover:underline">
+          Back to Dashboard
+        </Link>
+      </div>
+      <div className="w-full max-w-lg">{children}</div>
+    </div>
   );
 }

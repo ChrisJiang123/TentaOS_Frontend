@@ -7,7 +7,7 @@ import { Loader2, Plug, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-r
  * 包裹 Dashboard。Engine 不可达时显示清晰的连接引导，
  * 可达时渲染 children。解决：任务发不到后端、用户一进来不知道干嘛。
  */
-export default function ConnectionGate({ children }) {
+export default function ConnectionGate({ children, onConnected }) {
   const [status, setStatus] = useState('checking'); // checking | connected | offline
   const [input, setInput] = useState('');
   const [probing, setProbing] = useState(false);
@@ -21,12 +21,13 @@ export default function ConnectionGate({ children }) {
     try {
       await engineClient.getHealth();
       setStatus('connected');
+      onConnected?.();
     } catch {
       setStatus('offline');
     } finally {
       setProbing(false);
     }
-  }, []);
+  }, [onConnected]);
 
   useEffect(() => {
     probe();

@@ -3,12 +3,16 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
 import engineClient from '@/lib/engineClient';
+import { engineTaskStore } from '@/lib/engineTaskStore';
 import PipelineRunStatusBar from '@/components/debug/PipelineRunStatusBar';
 import RuntimeDebugPanel from '@/components/debug/RuntimeDebugPanel';
 
 export default function AppLayout() {
   useEffect(() => {
     engineClient.connect();
+    engineTaskStore.refreshList().catch((err) => {
+      console.error('[AppLayout] refreshList failed', err);
+    });
     return () => engineClient.disconnect();
   }, []);
 

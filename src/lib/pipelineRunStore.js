@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { runtimeDebug } from '@/lib/runtimeDebug';
+import { mapEngineStatus } from '@/lib/engineTaskUtils';
 
 /** User-visible run phases (demo-friendly). */
 export const RUN_PHASES = {
@@ -25,6 +26,8 @@ export const PIPELINE_WS_EVENTS = [
   'llm_streaming',
   'completed',
   'failed',
+  'task_finished',
+  'connection_established',
   'task_started',
   'task_completed',
   'step_started',
@@ -40,6 +43,7 @@ const EVENT_TO_PHASE = {
   llm_streaming: 'llm_streaming',
   completed: 'completed',
   failed: 'failed',
+  task_finished: 'completed',
   task_started: 'pipeline_started',
   task_completed: 'completed',
   step_started: 'tool_running',
@@ -105,12 +109,67 @@ class PipelineRunStore {
 
   markBackendReceived(payload, requestId) {
     this.phase = 'backend_received';
-    if (requestId) this.requestId = requestId;
-    const tid = payload?.task_id ?? payload?.taskId ?? payload?.id;
+    const rid = payload?.request_id ?? payload?.requestId ?? requestId;
+    if (rid) this.requestId = String(rid);
+    const tid =
+      payload?.task_id ??
+      payload?.taskId ??
+      payload?.id ??
+      payload?.task?.task_id ??
+      payload?.task?.taskId ??
+      payload?.task?.id;
     if (tid) this.taskId = String(tid);
     const pid = payload?.pipeline_id ?? payload?.pipelineId;
     if (pid) this.pipelineId = String(pid);
     runtimeDebug.setPipelineStage('backend_received', payload);
+    this._notify();
+  }
+
+  /** HTTP poll source-of-truth: derive chip phase from task.status only. */
+  syncFromTask(task) {
+    if (!task || typeof task !== 'object') return;
+    const tid = task.task_id ?? task.taskId ?? task.id;
+    if (tid) this.taskId = String(tid);
+    if (task.pipeline_id) this.pipelineId = String(task.pipeline_id);
+
+    const mapped = mapEngineStatus(task.status);
+
+    if (mapped === 'completed') {
+      this.phase = 'completed';
+      this.error = null;
+      this.lastEvent = { type: 'http_poll', data: task, at: Date.now() };
+      runtimeDebug.setPipelineStage('completed', task);
+      this._notify();
+      return;
+    }
+
+    if (mapped === 'failed' || mapped === 'cancelled') {
+      this.phase = 'failed';
+      const errMsg = task?.error ?? task?.message ?? 'Task failed';
+      this.error = { message: String(errMsg), at: Date.now() };
+      this.lastEvent = { type: 'http_poll', data: task, at: Date.now() };
+      runtimeDebug.setPipelineStage('failed', task);
+      this._notify();
+      return;
+    }
+
+    const statusToPhase = {
+      queued: 'backend_received',
+      planning: 'pipeline_started',
+      running: 'tool_running',
+      awaiting_approval: 'tool_selected',
+      paused: 'tool_running',
+    };
+    const nextPhase = statusToPhase[mapped] || 'backend_received';
+    this.phase = nextPhase;
+    this.lastEvent = { type: 'http_poll', data: task, at: Date.now() };
+    runtimeDebug.setPipelineStage(nextPhase, task);
+    this._notify();
+  }
+
+  notePollError(err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    this.lastEvent = { type: 'http_poll_error', data: { message: msg }, at: Date.now() };
     this._notify();
   }
 

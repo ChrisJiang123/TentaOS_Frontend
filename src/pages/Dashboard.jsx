@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useQuery, useQueries, useMutation } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import StatsBar from '../components/dashboard/StatsBar';
 import TaskCard from '../components/dashboard/TaskCard';
 import AgentSidebar from '../components/dashboard/AgentSidebar';
@@ -15,35 +15,18 @@ import CostDashboard from '../components/dashboard/CostDashboard';
 import TemplateSelector from '../components/dashboard/TemplateSelector';
 import StepStream from '../components/dashboard/StepStream';
 import EngineTaskMetrics from '../components/dashboard/EngineTaskMetrics';
+import EngineTaskDebugPanel from '../components/debug/EngineTaskDebugPanel';
 import { useLanguage } from '@/lib/LanguageContext';
 import engineClient from '@/lib/engineClient';
-import { ENGINE_URL } from '@/config';
 import ConnectionGate from '../components/engine/ConnectionGate';
 import ConnectionIndicator from '../components/engine/ConnectionIndicator';
 import BrowserPreview from '../components/engine/BrowserPreview';
 import TerminalOutput from '../components/engine/TerminalOutput';
 import ApprovalDialog from '../components/engine/ApprovalDialog';
 import EmergencyStop from '../components/engine/EmergencyStop';
-import {
-  normalizeEngineTask,
-  mapEngineStatus,
-  isActiveEngineStatus,
-  parseTaskIdFromSubmitResponse,
-} from '@/lib/engineTaskUtils';
-
-const ENGINE_TASKS_STORAGE_KEY = 'tentaos-engine-tasks-v1';
-
-function loadPersistedTasks() {
-  if (typeof window === 'undefined') return { ids: [], meta: {} };
-  try {
-    const raw = localStorage.getItem(ENGINE_TASKS_STORAGE_KEY);
-    if (!raw) return { ids: [], meta: {} };
-    const o = JSON.parse(raw);
-    return { ids: Array.isArray(o.ids) ? o.ids : [], meta: o.meta && typeof o.meta === 'object' ? o.meta : {} };
-  } catch {
-    return { ids: [], meta: {} };
-  }
-}
+import { submitEngineTask } from '@/lib/submitEngineTask';
+import { useEngineTasks } from '@/hooks/useEngineTasks';
+import { engineTaskStore } from '@/lib/engineTaskStore';
 
 export default function Dashboard() {
   const [filter, setFilter] = useState('all');
@@ -51,49 +34,13 @@ export default function Dashboard() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { t } = useLanguage();
-
-  const persisted = loadPersistedTasks();
-  const [trackedIds, setTrackedIds] = useState(persisted.ids);
-  const [taskMeta, setTaskMeta] = useState(persisted.meta);
   const [approvalMode, setApprovalMode] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem(
-      ENGINE_TASKS_STORAGE_KEY,
-      JSON.stringify({ ids: trackedIds, meta: taskMeta }),
-    );
-  }, [trackedIds, taskMeta]);
-
-  const registerEngineTask = useCallback((taskId, goal, pipeline = null) => {
-    const created_date = new Date().toISOString();
-    setTrackedIds((prev) => [taskId, ...prev.filter((id) => id !== taskId)].slice(0, 50));
-    setTaskMeta((prev) => ({
-      ...prev,
-      [taskId]: { goal, created_date, pipeline },
-    }));
-  }, []);
+  const { tasks, listDebug, debug } = useEngineTasks();
 
   useEffect(() => {
-    engineClient.connect();
-    return () => engineClient.disconnect();
-  }, []);
-
-  useEffect(() => {
-    return engineClient.on('task_started', (d) => {
-      const tid = d.task_id || d.taskId;
-      if (!tid) return;
-      const msg = d.message || d.input || d.goal || '';
-      setTrackedIds((prev) => {
-        if (prev.includes(tid)) return prev;
-        return [tid, ...prev].slice(0, 50);
-      });
-      setTaskMeta((prev) => {
-        if (prev[tid]) return prev;
-        return {
-          ...prev,
-          [tid]: { goal: msg, created_date: new Date().toISOString(), pipeline: null },
-        };
-      });
+    engineTaskStore.refreshList().catch((err) => {
+      console.error('[Dashboard] refreshList failed', err);
     });
   }, []);
 
@@ -103,43 +50,15 @@ export default function Dashboard() {
     refetchInterval: 10_000,
   });
 
-  const taskQueries = useQueries({
-    queries: trackedIds.map((id) => ({
-      queryKey: ['engine-task', id],
-      queryFn: () => engineClient.getTask(id),
-      enabled: Boolean(id),
-      refetchInterval: (q) => {
-        const data = q.state.data;
-        if (!data) return 2000;
-        const st = mapEngineStatus(data.status);
-        return isActiveEngineStatus(st) ? 2000 : false;
-      },
-    })),
-  });
-
-  const tasks = trackedIds
-    .map((id, i) => normalizeEngineTask(taskQueries[i]?.data, { ...taskMeta[id], taskId: id }))
-    .filter(Boolean);
-
-  const agents = [];
-
-  const pendingApprovalsCount = health?.pending_approvals ?? 0;
-  const syntheticApprovals = Array.from({ length: pendingApprovalsCount }, (_, i) => ({
-    id: `engine-pending-${i}`,
-    status: 'pending',
-  }));
-
   const templateLaunch = useMutation({
     mutationFn: async ({ goal, pipeline }) => {
-      const res = await engineClient.submitTask(goal);
-      return { res, goal, pipeline };
+      const { res, taskId } = await submitEngineTask(goal);
+      return { res, taskId, goal, pipeline };
     },
-    onSuccess: ({ res, goal, pipeline }) => {
-      const tid = parseTaskIdFromSubmitResponse(res);
-      if (tid) registerEngineTask(tid, goal, pipeline);
+    onSuccess: ({ taskId, goal }) => {
       toast({
         title: '已提交到 TentaOS Engine',
-        description: tid ? `任务 ID: ${tid}` : '请查看任务列表',
+        description: taskId ? `任务 ID: ${taskId}` : '请查看任务列表',
       });
     },
     onError: (e) => {
@@ -169,130 +88,128 @@ export default function Dashboard() {
   });
 
   const failedCount = tasks.filter((task) => task.status === 'failed' || task.status === 'cancelled').length;
+  const agents = [];
+  const pendingApprovalsCount = health?.pending_approvals ?? 0;
+  const syntheticApprovals = Array.from({ length: pendingApprovalsCount }, (_, i) => ({
+    id: `engine-pending-${i}`,
+    status: 'pending',
+  }));
 
   return (
-    <ConnectionGate>
-    <div className="min-h-screen p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-semibold text-white tracking-tight">
-              {user?.full_name ? `${t('welcomeBack')}, ${user.full_name.split(' ')[0]}` : t('dashboard')}
-            </h1>
-            <p className="text-sm text-white/40 mt-1">{t('dashboardSubtitle')}</p>
-            {health && (
-              <p className="text-[11px] text-white/30 mt-1">
-                引擎健康：{health.status ?? '—'}
-                {health.browser != null && ` · 浏览器 ${String(health.browser)}`}
-                {health.active_tasks != null && ` · 进行中 ${health.active_tasks}`}
-                {health.pending_approvals != null && ` · 待审批 ${health.pending_approvals}`}
-                {health.ws_clients != null && ` · ws_clients ${health.ws_clients}`}
-              </p>
-            )}
-          </div>
-          <ConnectionIndicator />
-        </div>
-
-        <div className="mb-6">
-          <StatsBar tasks={tasks} approvals={syntheticApprovals} />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
-          <div className="space-y-6">
-            <QuickActions onNewTask={() => document.querySelector('textarea')?.focus()} />
-
-            <TemplateSelector
-              isSubmitting={templateLaunch.isPending}
-              onSelect={(goal, pipeline) => templateLaunch.mutate({ goal, pipeline })}
-            />
-
-            <EngineTaskMetrics tasks={tasks} />
-
-            <PipelineChat
-              onEngineTaskSubmitted={(taskId, message, pipeline) => {
-                registerEngineTask(taskId, message, pipeline);
-                toast({ title: '任务已提交到 Engine', description: `ID: ${taskId}` });
-              }}
-              approvalMode={approvalMode}
-              onApprovalToggle={setApprovalMode}
-            />
-
-            <StepStream />
-
-            {tasks
-              .filter((task) => ['running', 'planning', 'awaiting_approval'].includes(task.status))
-              .map((task) => (
-                <LivePipelineCard key={task.id} task={task} />
-              ))}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <BrowserPreview />
-              <TerminalOutput />
-            </div>
-
+    <ConnectionGate onConnected={() => engineTaskStore.refreshList()}>
+      <div className="min-h-screen p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
             <div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-                <Tabs value={filter} onValueChange={setFilter}>
-                  <TabsList className="bg-white/[0.04] border border-white/[0.06]">
-                    <TabsTrigger
-                      value="all"
-                      className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/50"
-                    >
-                      {t('allFilter')}
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="active"
-                      className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/50"
-                    >
-                      {t('activeFilter')}
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="completed"
-                      className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/50"
-                    >
-                      {t('completedFilter')}
-                    </TabsTrigger>
-                    {failedCount > 0 && (
-                      <TabsTrigger
-                        value="failed"
-                        className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-red-400 text-white/50"
-                      >
-                        {t('failedFilter')} ({failedCount})
+              <h1 className="text-2xl font-semibold text-white tracking-tight">
+                {user?.full_name ? `${t('welcomeBack')}, ${user.full_name.split(' ')[0]}` : t('dashboard')}
+              </h1>
+              <p className="text-sm text-white/40 mt-1">{t('dashboardSubtitle')}</p>
+              {health && (
+                <p className="text-[11px] text-white/30 mt-1">
+                  引擎健康：{health.status ?? '—'}
+                  {health.active_tasks != null && ` · 进行中 ${health.active_tasks}`}
+                  {health.pending_approvals != null && ` · 待审批 ${health.pending_approvals}`}
+                </p>
+              )}
+              {listDebug.loading && (
+                <p className="text-[11px] text-white/25 mt-1">Loading tasks from Engine…</p>
+              )}
+            </div>
+            <ConnectionIndicator />
+          </div>
+
+          <div className="mb-6">
+            <StatsBar tasks={tasks} approvals={syntheticApprovals} />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+            <div className="space-y-6">
+              <QuickActions onNewTask={() => document.querySelector('textarea')?.focus()} />
+
+              <TemplateSelector
+                isSubmitting={templateLaunch.isPending}
+                onSelect={(goal, pipeline) => templateLaunch.mutate({ goal, pipeline })}
+              />
+
+              <EngineTaskMetrics tasks={tasks} />
+
+              <PipelineChat
+                onEngineTaskSubmitted={(taskId) => {
+                  toast({ title: '任务已提交到 Engine', description: `ID: ${taskId}` });
+                }}
+                approvalMode={approvalMode}
+                onApprovalToggle={setApprovalMode}
+              />
+
+              <StepStream />
+
+              {tasks
+                .filter((task) => ['running', 'planning', 'awaiting_approval', 'queued'].includes(task.status))
+                .map((task) => (
+                  <LivePipelineCard key={task.id} task={task} />
+                ))}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <BrowserPreview />
+                <TerminalOutput />
+              </div>
+
+              <div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                  <Tabs value={filter} onValueChange={setFilter}>
+                    <TabsList className="bg-white/[0.04] border border-white/[0.06]">
+                      <TabsTrigger value="all" className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/50">
+                        {t('allFilter')}
                       </TabsTrigger>
-                    )}
-                  </TabsList>
-                </Tabs>
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <SearchBar value={search} onChange={setSearch} />
-                  <span className="text-xs text-white/30 whitespace-nowrap">
-                    {filteredTasks.length} {t('tasks')}
-                  </span>
+                      <TabsTrigger value="active" className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/50">
+                        {t('activeFilter')}
+                      </TabsTrigger>
+                      <TabsTrigger value="completed" className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/50">
+                        {t('completedFilter')}
+                      </TabsTrigger>
+                      {failedCount > 0 && (
+                        <TabsTrigger value="failed" className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-red-400 text-white/50">
+                          {t('failedFilter')} ({failedCount})
+                        </TabsTrigger>
+                      )}
+                    </TabsList>
+                  </Tabs>
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <SearchBar value={search} onChange={setSearch} />
+                    <span className="text-xs text-white/30 whitespace-nowrap">
+                      {filteredTasks.length} {t('tasks')}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {filteredTasks.map((task) => (
+                    <TaskCard key={task.id} task={task} />
+                  ))}
+                  {filteredTasks.length === 0 && tasks.length === 0 && <WelcomeGuide />}
+                  {filteredTasks.length === 0 && tasks.length > 0 && (
+                    <div className="text-center py-16 text-white/30">
+                      <p className="text-sm">{t('noTasksMatch')}</p>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="space-y-2">
-                {filteredTasks.map((task) => (
-                  <TaskCard key={task.id} task={task} />
-                ))}
-                {filteredTasks.length === 0 && tasks.length === 0 && <WelcomeGuide />}
-                {filteredTasks.length === 0 && tasks.length > 0 && (
-                  <div className="text-center py-16 text-white/30">
-                    <p className="text-sm">{t('noTasksMatch')}</p>
-                  </div>
-                )}
-              </div>
+
+              {import.meta.env.DEV && (
+                <EngineTaskDebugPanel debug={debug} listDebug={listDebug} record={null} />
+              )}
+            </div>
+
+            <div className="hidden lg:block space-y-6">
+              <CostDashboard tasks={tasks} />
+              <AgentSidebar agents={agents} />
             </div>
           </div>
-
-          <div className="hidden lg:block space-y-6">
-            <CostDashboard tasks={tasks} />
-            <AgentSidebar agents={agents} />
-          </div>
         </div>
-      </div>
 
-      <ApprovalDialog />
-      <EmergencyStop />
-    </div>
+        <ApprovalDialog />
+        <EmergencyStop />
+      </div>
     </ConnectionGate>
   );
 }
