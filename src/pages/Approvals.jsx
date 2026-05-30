@@ -7,7 +7,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import engineClient from '@/lib/engineClient';
-import { approvalsMock } from '@/data/tentaosDashboardMock';
 import { useToast } from '@/components/ui/use-toast';
 
 const riskConfig = {
@@ -43,12 +42,12 @@ function ApprovalCard({ approval, onAction }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">{actionIcons[approval.action_type] || '⚡'}</span>
-              <span className="text-sm font-medium text-white">{approval.summary}</span>
+              <span className="text-sm font-medium text-white">{approval.summary || 'Approval request'}</span>
             </div>
-            <p className="text-xs text-white/40">Task: {approval.task_title}</p>
+            <p className="text-xs text-white/40">Task: {approval.task_title || '—'}</p>
           </div>
           <div className={cn("px-2.5 py-1 rounded-md text-[11px] font-medium capitalize ring-1", risk.bg, risk.color, risk.ring)}>
-            {approval.risk_level}
+            {approval.risk_level || 'medium'}
           </div>
         </div>
 
@@ -64,7 +63,6 @@ function ApprovalCard({ approval, onAction }) {
           )}
         </div>
 
-        {/* Preview Toggle */}
         <button
           onClick={() => setExpanded(!expanded)}
           className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/60 transition-colors mb-4"
@@ -88,7 +86,6 @@ function ApprovalCard({ approval, onAction }) {
           )}
         </AnimatePresence>
 
-        {/* Actions */}
         {approval.status === 'pending' && (
           <div className="flex items-center gap-2">
             <Button
@@ -140,56 +137,46 @@ export default function Approvals() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: approvalsPayload, isLoading, error } = useQuery({
+  const { data: approvalsPayload, isLoading, isError } = useQuery({
     queryKey: ['approvals'],
     queryFn: async () => {
       try {
         const list = await engineClient.getApprovals();
         const items = Array.isArray(list) ? list : (list?.approvals || []);
-        return { items, source: 'engine' };
-      } catch {
-        return { items: approvalsMock, source: 'mock' };
+        return { items: Array.isArray(items) ? items : [], source: 'engine' };
+      } catch (e) {
+        return {
+          items: [],
+          source: 'unavailable',
+          error: e instanceof Error ? e.message : String(e),
+        };
       }
     },
+    retry: 0,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
   });
+
   const approvals = approvalsPayload?.items || [];
-  const approvalsSource = approvalsPayload?.source || (error ? 'error' : 'unknown');
+  const apiUnavailable = approvalsPayload?.source === 'unavailable';
 
   const updateApproval = useMutation({
     mutationFn: async ({ id, status }) => {
-      // Engine API: POST /api/approvals/:id { approved, feedback }
-      try {
-        await engineClient.approveViaAPI(id, status === 'approved', '');
-        return { source: 'engine' };
-      } catch (e) {
-        return { source: 'mock', error: e instanceof Error ? e.message : String(e) };
-      }
+      await engineClient.approveViaAPI(id, status === 'approved', '');
+      return { source: 'engine' };
     },
-    onSuccess: (res, vars) => {
-      if (res?.source === 'engine') {
-        queryClient.invalidateQueries({ queryKey: ['approvals'] });
-        queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        toast({ title: '已发送到 Engine', description: `Approval: ${vars.id}` });
-        return;
-      }
-
-      // Mock fallback: update local cache so buttons aren't "dead"
-      queryClient.setQueryData(['approvals'], (prev) => {
-        const p = prev && typeof prev === 'object' ? prev : { items: approvalsMock, source: 'mock' };
-        const items = Array.isArray(p.items) ? p.items : [];
-        return {
-          ...p,
-          source: 'mock',
-          items: items.map((a) => (a?.id === vars.id ? { ...a, status: vars.status } : a)),
-        };
-      });
-      toast({
-        title: '本地模拟已更新',
-        description: 'Engine 审批接口不可用，已在 mock 队列中标记该审批为已处理。',
-      });
+    onSuccess: (_res, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['approvals'] });
+      queryClient.invalidateQueries({ queryKey: ['approvals-badge'] });
+      queryClient.invalidateQueries({ queryKey: ['approvals-badge-mobile'] });
+      toast({ title: '已发送到 Engine', description: `Approval: ${vars.id}` });
     },
     onError: (e) => {
-      toast({ title: '审批失败', description: e instanceof Error ? e.message : String(e), variant: 'destructive' });
+      toast({
+        title: '审批失败',
+        description: e instanceof Error ? e.message : String(e),
+        variant: 'destructive',
+      });
     },
   });
 
@@ -200,7 +187,6 @@ export default function Approvals() {
   });
 
   const pendingCount = approvals.filter(a => a.status === 'pending').length;
-  const usingMock = approvalsSource !== 'engine';
 
   return (
     <div data-testid="approvals-page" className="min-h-screen p-6 lg:p-8">
@@ -217,11 +203,14 @@ export default function Approvals() {
           </div>
           <p className="text-sm text-white/40 mt-1">Review and approve agent actions before execution</p>
           {isLoading && <p className="text-[11px] text-white/25 mt-1">Loading approvals…</p>}
-          {error && <p className="text-[11px] text-red-400/80 mt-1">Failed to load approvals (showing fallback if available).</p>}
-          {usingMock && !isLoading && (
-            <p className="text-[11px] text-white/25 mt-1">
-              当前使用 <span className="text-[#38BDF8]">mock</span> 队列（Engine /api/approvals 不可用或跨域失败）。
+          {!isLoading && apiUnavailable && (
+            <p className="text-[11px] text-white/30 mt-1">
+              Engine approvals API unavailable — showing empty queue (no mock data).
+              {approvalsPayload?.error ? ` (${approvalsPayload.error})` : ''}
             </p>
+          )}
+          {isError && (
+            <p className="text-[11px] text-red-400/80 mt-1">Failed to load approvals.</p>
           )}
         </div>
 
@@ -249,10 +238,13 @@ export default function Approvals() {
               />
             ))}
           </AnimatePresence>
-          {filtered.length === 0 && (
+          {!isLoading && filtered.length === 0 && (
             <div className="text-center py-16 text-white/30">
               <Shield className="w-8 h-8 mx-auto mb-3 text-white/15" />
               <p className="text-sm">No {filter} approvals</p>
+              {apiUnavailable && (
+                <p className="text-xs text-white/20 mt-2">Nothing pending on the Engine right now.</p>
+              )}
             </div>
           )}
         </div>

@@ -58,8 +58,12 @@ export default function Sidebar() {
   const { data: approvals = [] } = useQuery({
     queryKey: ['approvals-badge'],
     queryFn: async () => {
-      const list = await engineClient.getApprovals();
-      return Array.isArray(list) ? list : (list?.approvals || []);
+      try {
+        const list = await engineClient.getApprovals();
+        return Array.isArray(list) ? list : (list?.approvals || []);
+      } catch {
+        return [];
+      }
     },
     refetchInterval: 30000,
   });
@@ -87,7 +91,7 @@ export default function Sidebar() {
           const itemClass = cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group w-full",
             item.comingSoon
-              ? "text-white/25 cursor-not-allowed border border-transparent"
+              ? "text-white/40 hover:text-white/60 hover:bg-white/[0.03] border border-transparent"
               : isActive 
                 ? "bg-sky-500/[0.07] text-white border border-sky-400/15" 
                 : "text-white/50 hover:text-white/80 hover:bg-white/[0.04] border border-transparent"
@@ -118,14 +122,14 @@ export default function Sidebar() {
           );
           if (item.comingSoon) {
             return (
-              <div
+              <Link
                 key={item.path}
+                to={item.path}
                 className={itemClass}
-                title="即将推出"
-                aria-disabled="true"
+                title="Early access preview"
               >
                 {inner}
-              </div>
+              </Link>
             );
           }
           return (

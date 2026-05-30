@@ -45,8 +45,12 @@ export default function MobileNav() {
   const { data: approvals = [] } = useQuery({
     queryKey: ['approvals-badge-mobile'],
     queryFn: async () => {
-      const list = await engineClient.getApprovals();
-      return Array.isArray(list) ? list : (list?.approvals || []);
+      try {
+        const list = await engineClient.getApprovals();
+        return Array.isArray(list) ? list : (list?.approvals || []);
+      } catch {
+        return [];
+      }
     },
     refetchInterval: 30000,
   });
@@ -88,7 +92,7 @@ export default function MobileNav() {
             const itemClass = cn(
               "flex items-center gap-3 px-3 py-3 rounded-lg transition-all w-full",
               item.comingSoon
-                ? "text-white/25 cursor-not-allowed"
+                ? "text-white/40 hover:text-white/70 hover:bg-white/[0.03] border border-transparent"
                 : isActive
                   ? "bg-sky-500/[0.07] text-white border border-sky-400/15"
                   : "text-white/50 hover:text-white/80 hover:bg-white/[0.04] border border-transparent"
@@ -107,9 +111,15 @@ export default function MobileNav() {
             );
             if (item.comingSoon) {
               return (
-                <div key={item.path} className={itemClass} aria-disabled="true">
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setOpen(false)}
+                  className={itemClass}
+                  title="Early access preview"
+                >
                   {inner}
-                </div>
+                </Link>
               );
             }
             return (

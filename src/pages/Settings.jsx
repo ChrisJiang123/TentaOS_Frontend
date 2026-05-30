@@ -24,7 +24,7 @@ export default function Settings() {
     queryFn: () => engineClient.getHealth(),
     refetchInterval: 15000,
   });
-  const conn = engineClient.getConnectionInfo();
+  const conn = engineClient.getConnectionInfo?.() || { state: 'unknown', connected: false };
 
   return (
     <motion.div

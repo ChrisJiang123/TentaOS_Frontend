@@ -8,8 +8,12 @@ import SubscriptionCard from '../components/billing/SubscriptionCard';
 import CreditBalance from '../components/billing/CreditBalance';
 import TransactionTable from '../components/billing/TransactionTable';
 import UsageChart from '../components/billing/UsageChart';
+import BillingStatusPanel from '@/components/pricing/BillingStatusPanel';
+import TentaOSProCard from '@/components/pricing/TentaOSProCard';
 import { Button } from '@/components/ui/button';
-import { createCreemCheckout, fetchBillingMe } from '@/lib/billingAccountApi';
+import { fetchBillingMe } from '@/lib/billingAccountApi';
+import { startCreemCheckout, redirectToCheckout } from '@/lib/billingCheckout';
+import { formatCostShort, safeNumber } from '@/lib/formatNumbers';
 
 export default function Billing() {
   const [checkoutError, setCheckoutError] = useState('');
@@ -53,19 +57,18 @@ export default function Billing() {
 
   const isPaid = !['free', 'local'].includes(String(subscription.plan || '').toLowerCase());
   const isHosted = Boolean(subscription.billing_mode === 'hosted' || subscription.hosted === true);
+  const billingConnected = !billing.isLoading && !billing.isError && billing.data != null;
 
   async function startCheckout(productKey) {
+    if (!billingConnected) {
+      setCheckoutError('Billing is not connected yet. Checkout requires a configured Creem endpoint on the Engine.');
+      return;
+    }
     setCheckoutError('');
     setCheckoutLoading(true);
     try {
-      const res = await createCreemCheckout({
-        product: productKey,
-        return_path: '/billing/success',
-        cancel_path: '/billing/cancel',
-      });
-      const checkoutUrl = res.checkout_url || res.url || res.checkoutUrl;
-      if (!checkoutUrl) throw new Error('后端未返回 checkout_url');
-      window.location.href = String(checkoutUrl);
+      const { checkoutUrl } = await startCreemCheckout({ product: productKey });
+      redirectToCheckout(checkoutUrl);
     } catch (e) {
       setCheckoutError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -87,12 +90,25 @@ export default function Billing() {
         </div>
 
         <div className="space-y-6">
+          <BillingStatusPanel showUpgradeLink={false} />
+
+          {!isPaid && (
+            <TentaOSProCard onCheckoutError={setCheckoutError} compact />
+          )}
+
           <div className={`grid gap-6 ${isHosted ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 lg:grid-cols-2'}`}>
             <SubscriptionCard subscription={subscription} billingProviderConnected={!billing.isError} />
             <CreditBalance subscription={subscription} onBuyCredits={() => startCheckout('credits_medium')} />
           </div>
 
-          <CostSummary subscription={subscription} isHosted={isHosted} />
+          <CostSummary subscription={subscription} isHosted={isHosted} billingConnected={billingConnected} />
+
+          {!billingConnected && !billing.isLoading && (
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 text-sm text-white/45">
+              Billing is in early access. Subscription and credit checkout appear when the Engine exposes{' '}
+              <code className="text-white/35">/api/billing/me</code> and Creem checkout.
+            </div>
+          )}
 
           {billing.isError && (
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 text-amber-300/90 text-sm">
@@ -125,9 +141,9 @@ export default function Billing() {
                     variant="outline"
                     className="border-white/10 text-white/70 hover:text-white bg-transparent hover:bg-white/5"
                     onClick={() => startCheckout('credits_small')}
-                    disabled={checkoutLoading}
+                    disabled={checkoutLoading || !billingConnected}
                   >
-                    {checkoutLoading ? '跳转中…' : '购买积分'}
+                    {checkoutLoading ? '跳转中…' : billingConnected ? '购买积分' : 'Checkout unavailable'}
                   </Button>
                 </div>
               </div>
@@ -146,26 +162,42 @@ export default function Billing() {
   );
 }
 
-function CostSummary({ subscription, isHosted }) {
-  const amount = subscription?.amount || 0;
-  const creditsUsed = subscription?.credits_used_this_month || 0;
-  const creditCost = (creditsUsed * 0.003).toFixed(2); // rough estimate
+function CostSummary({ subscription, isHosted, billingConnected }) {
+  if (!billingConnected) {
+    return (
+      <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
+        <h3 className="text-sm font-medium text-white/50 mb-2">Cost Breakdown</h3>
+        <p className="text-sm text-white/40">
+          Early access — cost breakdown appears when billing is connected via{' '}
+          <code className="text-white/35">/api/billing/me</code>. No estimated charges are shown.
+        </p>
+      </div>
+    );
+  }
+
+  const amount = safeNumber(subscription?.amount, 0);
+  const creditsUsed = safeNumber(subscription?.credits_used_this_month, 0);
+  const creditCost = creditsUsed * 0.003;
+  const hasUsage = isHosted && creditsUsed > 0;
 
   return (
     <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
       <h3 className="text-sm font-medium text-white/50 mb-4">Cost Breakdown — This Month</h3>
       <div className="space-y-3">
-        <CostRow label="Software subscription" value={`$${amount.toFixed(2)}`} />
-        {isHosted && (
+        <CostRow label="Software subscription" value={formatCostShort(amount)} />
+        {hasUsage && (
           <>
-            <CostRow label={`Credit usage (${creditsUsed.toLocaleString()} credits)`} value={`$${creditCost}`} />
-            <CostRow label="Extra credit purchases" value="$0.00" />
+            <CostRow
+              label={`Credit usage (${creditsUsed.toLocaleString()} credits)`}
+              value={formatCostShort(creditCost, 2)}
+            />
+            <CostRow label="Extra credit purchases" value={formatCostShort(0)} />
           </>
         )}
         <div className="border-t border-white/[0.06] pt-3 flex justify-between">
           <span className="text-sm font-semibold text-white">Total</span>
           <span className="text-sm font-semibold text-white">
-            ${isHosted ? (amount + parseFloat(creditCost)).toFixed(2) : amount.toFixed(2)}
+            {formatCostShort(hasUsage ? amount + creditCost : amount)}
           </span>
         </div>
       </div>

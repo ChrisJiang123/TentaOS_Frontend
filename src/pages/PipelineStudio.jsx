@@ -23,7 +23,7 @@ import {
   getPipelineTemplates,
   validatePipeline as apiValidatePipeline,
 } from '@/lib/tentaosDashboardApi';
-import { useToast } from '@/components/ui/use-toast';
+import ComingSoonPage from '@/components/common/ComingSoonPage';
 
 const PIPELINE_LOCAL_STORAGE_KEY = 'tentaos-pipeline-local-draft-v1';
 
@@ -103,21 +103,13 @@ function WorkflowCard({ workflow, onSelect, isSelected }) {
 export default function PipelineStudio() {
   if (!PIPELINE_STUDIO_ENABLED) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8">
-        <div className="text-center max-w-md">
-          <Workflow className="w-12 h-12 mx-auto mb-4 text-white/10" />
-          <h2 className="text-lg font-medium text-white mb-2">Pipeline Studio</h2>
-          <p className="text-sm text-white/40">
-            可视化工作流编辑器正在开发中。目前请使用 Dashboard 的聊天框直接提交任务到 Engine。
-          </p>
-          <a
-            href="/Dashboard"
-            className="inline-block mt-6 text-sm text-sky-400 hover:text-sky-300"
-          >
-            前往 Dashboard →
-          </a>
-        </div>
-      </div>
+      <ComingSoonPage
+        testId="pipeline-studio-page"
+        title="Cortex Pipeline"
+        icon={Workflow}
+        description="The visual workflow editor is in early access. Submit goals from the Dashboard to run tasks on the Engine."
+        seoTitle="Cortex Pipeline — TentaOS"
+      />
     );
   }
 
