@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { planCtaHref } from '@/lib/pricingPlans';
+import { planCtaHref, formatPlanPrice, planShowsMonthlySuffix } from '@/lib/pricingPlans';
 
 const tierStyles = {
   'early-access': 'border-[#00E5FF]/35 bg-gradient-to-b from-[#00E5FF]/[0.06] to-transparent',
@@ -59,10 +59,12 @@ function PlanCard({ plan, checkoutReady, onCheckout }) {
       </header>
 
       <div className="mb-4">
-        <p className="text-2xl font-bold text-white">{plan.priceLabel}</p>
-        {plan.monthlyPrice == null && plan.priceLabel !== 'Custom' && (
-          <p className="text-[10px] text-white/30 mt-1">Monthly pricing at general availability</p>
-        )}
+        <div className="flex items-baseline gap-1.5">
+          <p className="text-3xl font-bold text-white">{formatPlanPrice(plan)}</p>
+          {planShowsMonthlySuffix(plan) && (
+            <span className="text-sm text-white/40">/ month</span>
+          )}
+        </div>
       </div>
 
       <ul className="flex-1 space-y-2 text-sm text-white/65 mb-4">
@@ -73,10 +75,6 @@ function PlanCard({ plan, checkoutReady, onCheckout }) {
           </li>
         ))}
       </ul>
-
-      <p className="text-[11px] text-white/35 mb-4">
-        Usage: <span className="text-white/50">{plan.usageLimits}</span>
-      </p>
 
       {canCheckout ? (
         <button

@@ -1,40 +1,41 @@
 // @ts-nocheck
 /**
- * Canonical SaaS pricing tiers — used when Engine GET /api/pricing is missing or malformed.
- * No fake traction metrics; CTAs are request-access until checkout is live.
+ * Canonical Phase 1 public pricing — used when GET /api/pricing fails or returns malformed data,
+ * and as the display source of truth when Engine plans are merged by id.
  */
 
 export const CANONICAL_PRICING_PLANS = [
   {
     id: 'early-access',
     name: 'Early Access',
-    audience: 'Founders, design partners, and early reviewers',
-    priceLabel: 'Request access',
-    monthlyPrice: null,
+    audience: 'Founders and design partners',
+    priceLabel: '$0',
+    monthlyPrice: 0,
     features: [
-      'Phase 1 demo access with Cloudflare Engine',
-      'Observable task pipeline & control plane',
-      'Direct feedback channel with the team',
+      'Phase 1 demo access',
+      'Cloudflare Engine endpoint',
+      'Feedback channel',
+      'Dashboard task runs',
     ],
-    usageLimits: 'Demo task quota · BYOK optional',
-    cta: 'Join early access',
-    ctaType: 'request',
+    cta: 'Start free',
+    ctaType: 'start',
     highlighted: true,
     checkoutStatus: 'early_access_request',
   },
   {
     id: 'builder',
     name: 'Builder',
-    audience: 'Individual builders shipping AI workflows',
-    priceLabel: 'To be announced',
-    monthlyPrice: null,
+    audience: 'Individual builders',
+    priceLabel: '$19',
+    monthlyPrice: 19,
     features: [
-      'Higher task & pipeline limits',
-      'Agents, models, and triggers registry',
-      'Runtime debug & audit-friendly execution',
+      'Task runs',
+      'Agent registry',
+      'Cortex Pipeline Studio',
+      'Model routing dashboard',
+      'Usage tracking',
     ],
-    usageLimits: 'Usage limits published at launch',
-    cta: 'Request access',
+    cta: 'Join Builder',
     ctaType: 'request',
     highlighted: false,
     checkoutStatus: 'early_access_request',
@@ -42,32 +43,33 @@ export const CANONICAL_PRICING_PLANS = [
   {
     id: 'team',
     name: 'Team',
-    audience: 'Small teams coordinating AI operations',
-    priceLabel: 'To be announced',
-    monthlyPrice: null,
+    audience: 'Small teams',
+    priceLabel: '$49',
+    monthlyPrice: 49,
     features: [
-      'Shared workflows & team-ready control plane',
-      'Approval gates & policy routing',
-      'Priority onboarding support',
+      'Shared workflows',
+      'Team-ready control plane',
+      'Approvals workflow',
+      'Trigger builder',
+      'Priority feedback',
     ],
-    usageLimits: 'Pooled usage · custom seats at launch',
-    cta: 'Contact for onboarding',
-    ctaType: 'contact',
+    cta: 'Join Team',
+    ctaType: 'request',
     highlighted: false,
     checkoutStatus: 'early_access_request',
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
-    audience: 'Organizations with compliance and deployment needs',
-    priceLabel: 'Custom',
+    audience: 'Organizations with compliance needs',
+    priceLabel: 'Contact',
     monthlyPrice: null,
     features: [
-      'Custom deployment & security review',
+      'Custom deployment review',
+      'Security workflow planning',
       'Dedicated support path',
-      'SLA & procurement-friendly billing',
+      'Compliance-oriented controls',
     ],
-    usageLimits: 'Custom',
     cta: 'Contact for onboarding',
     ctaType: 'contact',
     highlighted: false,
@@ -75,10 +77,12 @@ export const CANONICAL_PRICING_PLANS = [
   },
 ];
 
+const CANONICAL_BY_ID = Object.fromEntries(CANONICAL_PRICING_PLANS.map((p) => [p.id, p]));
+
 const CTA_BY_TYPE = {
+  start: { label: 'Start free', href: '/Dashboard' },
   request: { label: 'Request access', href: '/contact' },
   contact: { label: 'Contact for onboarding', href: '/contact' },
-  early_access: { label: 'Join early access', href: '/contact' },
 };
 
 function normalizeFeatureList(raw) {
@@ -100,36 +104,53 @@ function normalizePlan(raw, index) {
 
   const features = normalizeFeatureList(raw.features ?? raw.includes);
   const checkoutStatus = raw.checkout_status ?? raw.checkoutStatus ?? 'early_access_request';
+  const monthlyPrice =
+    typeof raw.monthly_price === 'number'
+      ? raw.monthly_price
+      : typeof raw.price_usd === 'number'
+        ? raw.price_usd
+        : null;
+
   const priceLabel =
     raw.price_label ??
     raw.priceLabel ??
-    (raw.monthly_price != null ? `$${raw.monthly_price}/mo` : null) ??
-    (raw.price_usd != null ? `$${raw.price_usd}/mo` : null) ??
-    'Request access';
+    (monthlyPrice != null ? `$${monthlyPrice}` : null) ??
+    'Contact';
 
   const ctaType =
     checkoutStatus === 'live' && raw.product_key ? 'checkout' : raw.cta_type ?? 'request';
 
-  const defaultCta =
-    id === 'enterprise' || id === 'team'
-      ? 'Contact for onboarding'
-      : id === 'early-access'
-        ? 'Join early access'
-        : 'Request access';
-
-  return {
+  const plan = {
     id,
     name: String(name),
     audience: raw.audience ?? raw.target_user ?? raw.tagline ?? raw.description ?? '—',
     priceLabel: String(priceLabel),
-    monthlyPrice: typeof raw.monthly_price === 'number' ? raw.monthly_price : null,
+    monthlyPrice,
     features: features.length ? features : ['Plan details from Engine'],
-    usageLimits: raw.usage_limits ?? raw.limits ?? raw.usage ?? 'Per plan entitlement',
-    cta: raw.cta ?? raw.cta_label ?? defaultCta,
+    cta: raw.cta ?? raw.cta_label ?? CTA_BY_TYPE[ctaType]?.label ?? 'Request access',
     ctaType,
     productKey: raw.product_key ?? raw.productKey ?? null,
     highlighted: Boolean(raw.highlighted ?? raw.popular ?? id === 'early-access'),
     checkoutStatus,
+  };
+
+  return mergeWithCanonical(plan);
+}
+
+/** Phase 1 public copy wins; Engine may supply checkout metadata only. */
+function mergeWithCanonical(plan) {
+  const canonical = CANONICAL_BY_ID[plan.id];
+  if (!canonical) return plan;
+  return {
+    ...plan,
+    name: canonical.name,
+    audience: canonical.audience,
+    priceLabel: canonical.priceLabel,
+    monthlyPrice: canonical.monthlyPrice,
+    features: canonical.features,
+    cta: canonical.cta,
+    ctaType: plan.ctaType === 'checkout' && plan.productKey ? 'checkout' : canonical.ctaType,
+    highlighted: canonical.highlighted,
   };
 }
 
@@ -139,7 +160,7 @@ function isValidPlan(plan) {
 
 /**
  * Use Engine plans only when at least 3 valid plan objects are returned.
- * Never collapse to a single merged package.
+ * Display copy is merged with canonical tiers by plan id.
  */
 export function resolvePricingPlans(apiResult) {
   const candidates = [
@@ -174,8 +195,21 @@ export function resolvePricingPlans(apiResult) {
 
 export function planCtaHref(plan) {
   if (plan?.ctaType === 'checkout' && plan?.productKey) return null;
+  if (plan?.ctaType === 'start') return '/Dashboard';
   if (plan?.ctaType === 'contact') return '/contact';
   return '/contact';
+}
+
+export function formatPlanPrice(plan) {
+  if (!plan) return '—';
+  if (plan.id === 'enterprise' || plan.priceLabel === 'Contact') return 'Contact';
+  if (plan.monthlyPrice === 0) return '$0';
+  if (typeof plan.monthlyPrice === 'number') return `$${plan.monthlyPrice}`;
+  return plan.priceLabel;
+}
+
+export function planShowsMonthlySuffix(plan) {
+  return plan && plan.id !== 'enterprise' && typeof plan.monthlyPrice === 'number';
 }
 
 export { CTA_BY_TYPE };

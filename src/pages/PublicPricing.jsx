@@ -77,8 +77,8 @@ export default function PublicPricing() {
             Plans for every stage
           </h1>
           <p className="text-sm text-white/45 max-w-2xl">
-            Public plan comparison for TentaOS. Early access is onboarding-only — no fake metrics or broken
-            checkout links.
+            Phase 1 public pricing for TentaOS — compare Early Access, Builder, Team, and Enterprise. Checkout
+            routes to onboarding until Creem is live for approved accounts.
           </p>
           {source === 'engine' && !pricingQuery.isLoading && (
             <p className="text-[11px] text-emerald-400/70 mt-2">Plans loaded from Engine GET /api/pricing</p>
