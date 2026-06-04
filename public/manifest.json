@@ -1,0 +1,10 @@
+{
+  "name": "TentaOS",
+  "short_name": "TentaOS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06060B",
+  "theme_color": "#06060B",
+  "icons": []
+}
+
