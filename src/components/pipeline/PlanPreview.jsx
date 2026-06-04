@@ -18,6 +18,7 @@ import { submitEngineTask } from '@/lib/submitEngineTask';
 import { createTemplate } from '@/lib/templatesApi';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useStrings } from '@/i18n/useStrings';
 
 const TOOL_ICONS = {
   terminal: Terminal,
@@ -32,24 +33,25 @@ const RISK_STYLES = {
   high: 'text-red-400 bg-red-500/10 border-red-500/30',
 };
 
-function verificationLabel(step) {
-  const v = step?.verification;
-  if (!v?.expression) return '完成后人工确认';
-  const prefix =
-    v.type === 'test'
-      ? '完成后跑'
-      : v.type === 'build'
-        ? '完成后执行'
-        : '验证：';
-  return `${prefix} \`${v.expression}\``;
-}
-
 export default function PlanPreview({ pipeline, planId, intent, onClose, onLaunched }) {
   const { toast } = useToast();
+  const { t } = useStrings();
   const navigate = useNavigate();
   const [steps, setSteps] = useState(() => pipeline?.steps || []);
   const [launching, setLaunching] = useState(false);
   const [savingTpl, setSavingTpl] = useState(false);
+
+  const verificationLabel = (step) => {
+    const v = step?.verification;
+    if (!v?.expression) return t('planVerifyManual');
+    const prefix =
+      v.type === 'test'
+        ? t('planVerifyRun')
+        : v.type === 'build'
+          ? t('planVerifyExec')
+          : `${t('verifyPrefix')} `;
+    return `${prefix}\`${v.expression}\``;
+  };
 
   const activeSteps = useMemo(() => steps.filter((s) => s.status !== 'skipped'), [steps]);
 
@@ -65,20 +67,20 @@ export default function PlanPreview({ pipeline, planId, intent, onClose, onLaunc
 
   const handleLaunch = async () => {
     if (!activeSteps.length) {
-      toast({ variant: 'destructive', title: '无法启动', description: '至少保留一个步骤' });
+      toast({ variant: 'destructive', title: t('planCannotLaunch'), description: t('planMinOneStep') });
       return;
     }
     setLaunching(true);
     try {
       const { taskId } = await submitEngineTask(intent, { planId });
-      if (!taskId) throw new Error('缺少 task_id');
-      toast({ title: '已启动', description: '进入运行视图…' });
+      if (!taskId) throw new Error(t('planMissingTaskId'));
+      toast({ title: t('planLaunched'), description: t('toastTaskSubmittedDesc') });
       if (onLaunched) await onLaunched(taskId);
       navigate(`/TaskDetail?id=${encodeURIComponent(taskId)}`);
     } catch (err) {
       toast({
         variant: 'destructive',
-        title: '启动失败',
+        title: t('planLaunchFailed'),
         description: err instanceof Error ? err.message : String(err),
       });
     } finally {
@@ -95,7 +97,7 @@ export default function PlanPreview({ pipeline, planId, intent, onClose, onLaunc
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-medium text-white">执行计划预览</h3>
+          <h3 className="text-sm font-medium text-white">{t('planPreviewTitle')}</h3>
           <p className="text-[11px] text-white/40 mt-1 line-clamp-2">{intent}</p>
           {planId && (
             <p className="text-[10px] text-white/25 mt-1 font-mono">plan: {planId}</p>
@@ -103,7 +105,7 @@ export default function PlanPreview({ pipeline, planId, intent, onClose, onLaunc
         </div>
         {onClose && (
           <button type="button" onClick={onClose} className="text-xs text-white/30 hover:text-white/50">
-            关闭
+            {t('planClose')}
           </button>
         )}
       </div>
@@ -137,11 +139,11 @@ export default function PlanPreview({ pipeline, planId, intent, onClose, onLaunc
                     {isHigh && (
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 flex items-center gap-1">
                         <Shield className="w-3 h-3" />
-                        需审批
+                        {t('planNeedsApproval')}
                       </span>
                     )}
                     {isSkipped && (
-                      <span className={cn('text-[10px]', statusCfg.color)}>已跳过</span>
+                      <span className={cn('text-[10px]', statusCfg.color)}>{t('planSkipped')}</span>
                     )}
                   </div>
                   <p className="text-[11px] text-white/45">{verificationLabel(step)}</p>
@@ -149,7 +151,7 @@ export default function PlanPreview({ pipeline, planId, intent, onClose, onLaunc
                 <div className="flex flex-col gap-1 flex-shrink-0">
                   <button
                     type="button"
-                    title="跳过"
+                    title={t('planSkip')}
                     onClick={() => skipStep(step.id)}
                     disabled={isSkipped}
                     className="p-1.5 rounded-md text-white/30 hover:text-amber-400 hover:bg-amber-500/10 disabled:opacity-30"
@@ -158,7 +160,7 @@ export default function PlanPreview({ pipeline, planId, intent, onClose, onLaunc
                   </button>
                   <button
                     type="button"
-                    title="删除"
+                    title={t('planDelete')}
                     onClick={() => removeStep(step.id)}
                     className="p-1.5 rounded-md text-white/30 hover:text-red-400 hover:bg-red-500/10"
                   >
@@ -179,16 +181,16 @@ export default function PlanPreview({ pipeline, planId, intent, onClose, onLaunc
           className="flex-1 border-white/10 text-white/70"
           data-testid="save-as-template"
           onClick={async () => {
-            const name = window.prompt('模板名称', intent?.slice(0, 40) || 'My plan');
+            const name = window.prompt('Template name', intent?.slice(0, 40) || 'My plan');
             if (!name?.trim()) return;
             setSavingTpl(true);
             try {
               await createTemplate({ name: name.trim(), steps: activeSteps });
-              toast({ title: '已存为模板', description: name.trim() });
+              toast({ title: t('planTemplateSaved'), description: name.trim() });
             } catch (err) {
               toast({
                 variant: 'destructive',
-                title: '保存模板失败',
+                title: t('planSaveTemplateFailed'),
                 description: err instanceof Error ? err.message : String(err),
               });
             } finally {
@@ -197,7 +199,7 @@ export default function PlanPreview({ pipeline, planId, intent, onClose, onLaunc
           }}
         >
           {savingTpl ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-          存为模板
+          {t('planSaveTemplate')}
         </Button>
         <Button
           onClick={handleLaunch}
@@ -206,7 +208,7 @@ export default function PlanPreview({ pipeline, planId, intent, onClose, onLaunc
           data-testid="plan-preview-launch"
         >
           {launching ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
-          Launch（{activeSteps.length} 步）
+          {t('planLaunch')} ({activeSteps.length} {t('planSteps')})
         </Button>
       </div>
     </div>

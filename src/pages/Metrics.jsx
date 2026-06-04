@@ -14,14 +14,16 @@ import {
 } from 'recharts';
 import { fetchMetrics } from '@/lib/metricsApi';
 import { cn } from '@/lib/utils';
-
-const RANGES = [
-  { id: '7d', label: '近 7 天' },
-  { id: '30d', label: '近 30 天' },
-];
+import { useStrings } from '@/i18n/useStrings';
 
 export default function Metrics() {
+  const { t } = useStrings();
   const [range, setRange] = useState('7d');
+  const RANGES = [
+    { id: '7d', label: t('metricsRange7d') },
+    { id: '30d', label: t('metricsRange30d') },
+  ];
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['metrics', range],
     queryFn: () => fetchMetrics(range),
@@ -30,6 +32,8 @@ export default function Metrics() {
 
   const series = data?.series || [];
   const reliability = data?.reliability || {};
+  const sourceLabel =
+    data?.source === 'engine' ? t('metricsSourceEngine') : t('metricsSourceLocal');
 
   return (
     <motion.div
@@ -43,10 +47,10 @@ export default function Metrics() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <BarChart3 className="w-6 h-6 text-[#00E5FF]" />
-              <h1 className="text-2xl font-semibold text-white">可观测</h1>
+              <h1 className="text-2xl font-semibold text-white">{t('metricsTitle')}</h1>
             </div>
             <p className="text-sm text-white/40">
-              成功率、延迟、成本与可靠性（{data?.source === 'engine' ? 'Engine' : '本地估算'}）
+              {t('metricsSubtitle')} ({sourceLabel})
             </p>
           </div>
           <div className="flex gap-2">
@@ -68,41 +72,37 @@ export default function Metrics() {
           </div>
         </div>
 
-        {isLoading && <p className="text-sm text-white/40">加载指标…</p>}
+        {isLoading && <p className="text-sm text-white/40">{t('metricsLoading')}</p>}
         {isError && !data && (
-          <p className="text-sm text-red-400/90">无法加载指标，请确认 Engine 可达</p>
+          <p className="text-sm text-red-400/90">{t('metricsLoadError')}</p>
         )}
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-          <KpiCard
-            icon={Activity}
-            label="成功率"
-            value={`${data?.success_rate ?? '—'}%`}
-          />
-          <KpiCard icon={Clock} label="平均延迟" value={`${data?.avg_latency_ms ?? '—'} ms`} />
-          <KpiCard icon={DollarSign} label="累计成本" value={`$${data?.total_cost ?? '—'}`} />
-          <KpiCard icon={GitFork} label="Fork 胜率" value={`${data?.fork_win_rate ?? 0}%`} />
+          <KpiCard icon={Activity} label={t('metricsSuccessRate')} value={`${data?.success_rate ?? '—'}%`} />
+          <KpiCard icon={Clock} label={t('metricsAvgLatency')} value={`${data?.avg_latency_ms ?? '—'} ms`} />
+          <KpiCard icon={DollarSign} label={t('metricsTotalCost')} value={`$${data?.total_cost ?? '—'}`} />
+          <KpiCard icon={GitFork} label={t('metricsForkWinRate')} value={`${data?.fork_win_rate ?? 0}%`} />
         </div>
 
-        <ChartCard title="成功率趋势" data={series} dataKey="success_rate" suffix="%" />
-        <ChartCard title="成本趋势" data={series} dataKey="cost" prefix="$" />
-        <ChartCard title="延迟趋势" data={series} dataKey="latency_ms" suffix=" ms" />
+        <ChartCard title={t('metricsSuccessTrend')} data={series} dataKey="success_rate" suffix="%" t={t} />
+        <ChartCard title={t('metricsCostTrend')} data={series} dataKey="cost" prefix="$" t={t} />
+        <ChartCard title={t('metricsLatencyTrend')} data={series} dataKey="latency_ms" suffix=" ms" t={t} />
 
         <div className="mt-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-          <h2 className="text-sm font-medium text-white mb-4">可靠性（Phase 18）</h2>
+          <h2 className="text-sm font-medium text-white mb-4">{t('metricsReliability')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
             <div>
-              <p className="text-white/40 text-xs">长任务成功率</p>
+              <p className="text-white/40 text-xs">{t('metricsLongTaskSuccess')}</p>
               <p className="text-white font-mono mt-1">
                 {reliability.long_task_success_rate ?? data?.success_rate ?? '—'}%
               </p>
             </div>
             <div>
-              <p className="text-white/40 text-xs">超时率</p>
+              <p className="text-white/40 text-xs">{t('metricsTimeoutRate')}</p>
               <p className="text-white font-mono mt-1">{reliability.timeout_rate ?? '—'}%</p>
             </div>
             <div>
-              <p className="text-white/40 text-xs">平均重试</p>
+              <p className="text-white/40 text-xs">{t('metricsAvgRetries')}</p>
               <p className="text-white font-mono mt-1">{reliability.retry_count_avg ?? '—'}</p>
             </div>
           </div>
@@ -122,7 +122,7 @@ function KpiCard({ icon: Icon, label, value }) {
   );
 }
 
-function ChartCard({ title, data, dataKey, prefix = '', suffix = '' }) {
+function ChartCard({ title, data, dataKey, prefix = '', suffix = '', t }) {
   return (
     <div className="mb-6 p-4 rounded-xl border border-white/[0.06] bg-white/[0.02]">
       <h3 className="text-xs text-white/50 mb-4">{title}</h3>
@@ -140,18 +140,12 @@ function ChartCard({ title, data, dataKey, prefix = '', suffix = '' }) {
                 fontSize: 11,
               }}
             />
-            <Line
-              type="monotone"
-              dataKey={dataKey}
-              stroke="#00E5FF"
-              strokeWidth={2}
-              dot={false}
-            />
+            <Line type="monotone" dataKey={dataKey} stroke="#00E5FF" strokeWidth={2} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>
       <p className="text-[10px] text-white/25 mt-2">
-        悬停查看每日 {prefix}
+        {t('metricsHoverHint')} {prefix}
         {dataKey}
         {suffix}
       </p>

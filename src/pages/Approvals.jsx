@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import engineClient from '@/lib/engineClient';
 import { useToast } from '@/components/ui/use-toast';
 import { APPROVAL_ACTION_EXAMPLES } from '@/data/controlPlaneFallbacks';
+import { useStrings } from '@/i18n/useStrings';
 
 const riskConfig = {
   low: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', ring: 'ring-emerald-500/20' },
@@ -27,6 +28,7 @@ const actionIcons = {
 };
 
 function ApprovalCard({ approval, onAction }) {
+  const { t } = useStrings();
   const [expanded, setExpanded] = useState(false);
   const risk = riskConfig[approval.risk_level] || riskConfig.medium;
 
@@ -55,7 +57,7 @@ function ApprovalCard({ approval, onAction }) {
         {(approval.expected_impact?.files?.length > 0 ||
           approval.expected_impact?.commands?.length > 0) && (
           <div className="rounded-lg bg-black/30 border border-white/[0.06] p-3 mb-3 text-[11px] font-mono">
-            <p className="text-white/40 text-[10px] mb-2">预期影响</p>
+            <p className="text-white/40 text-[10px] mb-2">{t('expectedImpact')}</p>
             {(approval.expected_impact.files || []).map((f) => (
               <p key={f} className="text-cyan-300/80">
                 file: {f}
@@ -156,6 +158,7 @@ export default function Approvals() {
   const [filter, setFilter] = useState('pending');
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useStrings();
 
   const { data: approvalsPayload, isLoading, isError } = useQuery({
     queryKey: ['approvals'],
@@ -189,11 +192,11 @@ export default function Approvals() {
       queryClient.invalidateQueries({ queryKey: ['approvals'] });
       queryClient.invalidateQueries({ queryKey: ['approvals-badge'] });
       queryClient.invalidateQueries({ queryKey: ['approvals-badge-mobile'] });
-      toast({ title: '已发送到 Engine', description: `Approval: ${vars.id}` });
+      toast({ title: t('approvalSent'), description: `Approval: ${vars.id}` });
     },
     onError: (e) => {
       toast({
-        title: '审批失败',
+        title: t('approvalFailed'),
         description: e instanceof Error ? e.message : String(e),
         variant: 'destructive',
       });

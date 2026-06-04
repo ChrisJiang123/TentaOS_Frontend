@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Workflow, Users, Shield, 
-  Cpu, BarChart3, Menu, X, FileText, LogOut, Download, Zap, Settings2, Stethoscope
+  Cpu, Coins, Activity, Menu, X, FileText, LogOut, Download, Zap, Settings2, Stethoscope
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -18,8 +18,8 @@ const navKeys = [
   { path: '/Agents', icon: Users, key: 'agents' },
   { path: '/Approvals', icon: Shield, key: 'approvals' },
   { path: '/Models', icon: Cpu, key: 'models' },
-  { path: '/Usage', icon: BarChart3, key: 'usage' },
-  { path: '/Metrics', icon: BarChart3, key: 'metrics' },
+  { path: '/Usage', icon: Coins, key: 'usage' },
+  { path: '/Metrics', icon: Activity, key: 'metrics' },
   { path: '/diagnostics', icon: Stethoscope, key: 'diagnostics' },
   { path: '/Triggers', icon: Zap, key: 'triggers' },
   { path: '/Settings', icon: Settings2, key: 'settings' },
@@ -66,7 +66,7 @@ export default function MobileNav() {
           <div className="flex items-center gap-2 text-[11px] text-white/45 min-w-0">
             {top.status && <span className="truncate">Status: <span className="text-white/70">{top.status}</span></span>}
             {top.credits != null && <span className="whitespace-nowrap">· {top.credits.toLocaleString()} cr</span>}
-            {billing.isError && <span className="text-amber-300/80">· Billing 未接入</span>}
+            {billing.isError && <span className="text-amber-300/80">· {t('mobileBillingOff')}</span>}
           </div>
         </div>
         <button

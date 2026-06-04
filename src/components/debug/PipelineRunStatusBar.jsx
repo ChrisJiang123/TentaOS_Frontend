@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React from 'react';
 import { usePipelineRun } from '@/hooks/usePipelineRun';
-import { RUN_PHASES } from '@/lib/pipelineRunStore';
-import { AlertCircle, CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { pipelineRunStore, RUN_PHASES } from '@/lib/pipelineRunStore';
+import { AlertCircle, CheckCircle2, Loader2, XCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ORDERED = [
@@ -19,8 +19,7 @@ const ORDERED = [
 ];
 
 function phaseIndex(phase) {
-  const o = RUN_PHASES[phase]?.order ?? -1;
-  return o;
+  return RUN_PHASES[phase]?.order ?? -1;
 }
 
 export default function PipelineRunStatusBar() {
@@ -30,11 +29,12 @@ export default function PipelineRunStatusBar() {
   const currentOrder = phaseIndex(run.phase);
   const isFailed = run.phase === 'failed';
   const isDone = run.phase === 'completed';
+  const canDismiss = isFailed || isDone;
 
   return (
     <div
       className={cn(
-        'mx-4 mt-3 mb-0 rounded-xl border px-4 py-3 text-xs',
+        'mx-4 mt-3 mb-0 rounded-xl border px-4 py-3 text-xs relative',
         isFailed
           ? 'border-red-500/30 bg-red-500/10'
           : isDone
@@ -44,7 +44,17 @@ export default function PipelineRunStatusBar() {
       role="status"
       aria-live="polite"
     >
-      <div className="flex flex-wrap items-center gap-2 mb-2">
+      {canDismiss && (
+        <button
+          type="button"
+          onClick={() => pipelineRunStore.reset()}
+          className="absolute right-2 top-2 p-1 rounded-md text-white/40 hover:text-white hover:bg-white/10"
+          aria-label="Dismiss"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      )}
+      <div className="flex flex-wrap items-center gap-2 mb-2 pr-6">
         {isFailed ? (
           <XCircle className="w-4 h-4 text-red-400 shrink-0" />
         ) : isDone ? (
@@ -52,15 +62,15 @@ export default function PipelineRunStatusBar() {
         ) : (
           <Loader2 className="w-4 h-4 text-cyan-400 animate-spin shrink-0" />
         )}
-        <span className={cn('font-medium', isFailed ? 'text-red-300' : isDone ? 'text-emerald-300' : 'text-cyan-200')}>
+        <span
+          className={cn(
+            'font-medium',
+            isFailed ? 'text-red-300' : isDone ? 'text-emerald-300' : 'text-cyan-200',
+          )}
+        >
           {run.label}
         </span>
         {run.taskId && <span className="text-white/35 font-mono">task: {run.taskId}</span>}
-        {run.requestId && (
-          <span className="text-white/25 font-mono">
-            req: {run.requestId.length > 28 ? `${run.requestId.slice(0, 28)}…` : run.requestId}
-          </span>
-        )}
       </div>
 
       <div className="flex flex-wrap gap-1.5">
@@ -89,14 +99,7 @@ export default function PipelineRunStatusBar() {
       {run.error && (
         <div className="mt-2 flex items-start gap-2 text-red-300/90">
           <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-          <div>
-            <p>{run.error.message}</p>
-            {run.error.stack && (
-              <pre className="mt-1 text-[10px] text-red-200/60 overflow-auto max-h-24 whitespace-pre-wrap">
-                {run.error.stack}
-              </pre>
-            )}
-          </div>
+          <p>{run.error.message}</p>
         </div>
       )}
     </div>

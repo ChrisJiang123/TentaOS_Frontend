@@ -5,21 +5,21 @@ import { readJson, writeJson, ACCOUNT_STORAGE_KEYS } from './accountStorage.js';
 export const DEFAULT_PREFERENCE_RULES = [
   {
     id: 'require_tests_before_deploy',
-    label: '部署前必须先跑测试',
+    label: 'Run tests before deploy',
     enabled: true,
     kind: 'verification',
     expression: 'npm test',
   },
   {
     id: 'require_approval_for_prod',
-    label: '碰生产环境必须人工审批',
+    label: 'Require approval for production',
     enabled: true,
     kind: 'approval',
     risk: 'high',
   },
   {
     id: 'preferred_model',
-    label: '优先模型',
+    label: 'Preferred model',
     enabled: false,
     kind: 'model',
     value: 'claude',

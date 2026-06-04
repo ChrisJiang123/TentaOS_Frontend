@@ -13,11 +13,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { useStrings } from '@/i18n/useStrings';
 import PipelineStepList from './PipelineStepList';
 
-/**
- * Phase 11–14: parallel fork swimlanes when pipeline.forks present; else single lane (children).
- */
 export default function ForkLanes({
   pipeline,
   mode,
@@ -34,6 +32,7 @@ export default function ForkLanes({
   forking,
   merging,
 }) {
+  const { t } = useStrings();
   const forks = pipeline?.forks || [];
   const [mergeTarget, setMergeTarget] = useState(null);
 
@@ -68,7 +67,7 @@ export default function ForkLanes({
         <div>
           <div className="flex items-center gap-2 text-sm font-medium text-white">
             <GitFork className="w-4 h-4 text-violet-400" />
-            并行探索 · {forks.length} 条泳道
+            {t('forkLanesTitle')} · {forks.length} {t('forkLanesCount')}
           </div>
           <p className="text-[11px] text-white/40 mt-1 line-clamp-1">{pipeline.intent}</p>
         </div>
@@ -82,7 +81,7 @@ export default function ForkLanes({
             data-testid="start-fork"
           >
             {forking ? <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> : <GitFork className="w-3.5 h-3.5 mr-2" />}
-            发起 Fork
+            {t('startFork')}
           </Button>
         )}
       </div>
@@ -128,12 +127,12 @@ export default function ForkLanes({
                     data-testid="merge-fork-btn"
                   >
                     <Merge className="w-3 h-3 mr-1" />
-                    Merge
+                    {t('mergeFork')}
                   </Button>
                 )}
               </div>
 
-              <ForkScorecard steps={forkPipeline.steps} />
+              <ForkScorecard steps={forkPipeline.steps} t={t} />
 
               <PipelineStepList
                 pipeline={forkPipeline}
@@ -150,22 +149,20 @@ export default function ForkLanes({
         })}
       </div>
 
-      <p className="text-[10px] text-white/30 text-center">
-        落败泳道已作为反事实执行数据存档（由 Engine 持久化）
-      </p>
+      <p className="text-[10px] text-white/30 text-center">{t('forkArchiveNote')}</p>
 
       <AlertDialog open={Boolean(mergeTarget)} onOpenChange={(o) => !o && setMergeTarget(null)}>
         <AlertDialogContent className="bg-[#13131A] border-white/10 text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>合并获胜 Fork？</AlertDialogTitle>
+            <AlertDialogTitle>{t('mergeConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription className="text-white/50">
-              将把 fork {mergeTarget} 的变更合并到主工作区。高风险变更需人工确认，合并后可用检查点回滚。
+              {t('mergeConfirmDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-white/50">取消</AlertDialogCancel>
+            <AlertDialogCancel className="text-white/50">{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleMergeConfirm} className="bg-emerald-600 hover:bg-emerald-500">
-              确认合并
+              {t('confirmMerge')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -174,7 +171,7 @@ export default function ForkLanes({
   );
 }
 
-function ForkScorecard({ steps }) {
+function ForkScorecard({ steps, t }) {
   const checks = (steps || [])
     .filter((s) => s.verification?.result)
     .map((s) => ({
@@ -186,7 +183,7 @@ function ForkScorecard({ steps }) {
   if (!checks.length) {
     return (
       <div className="text-[10px] text-white/30 px-2 py-1.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-        验证记分卡：等待客观 check 结果
+        {t('forkScorecardPending')}
       </div>
     );
   }
@@ -199,7 +196,7 @@ function ForkScorecard({ steps }) {
       data-testid="fork-scorecard"
     >
       <p className="text-white/50 font-medium">
-        验证记分 · {passed}/{checks.length} pass
+        {t('forkScorecard')} · {passed}/{checks.length} pass
       </p>
       {checks.map((c, i) => (
         <p key={i} className={c.result === 'pass' ? 'text-emerald-400/90' : 'text-red-400/90'}>

@@ -41,16 +41,16 @@ export function buildFallbackPlan(intent, planId = `local-${Date.now()}`) {
   const steps = [
     {
       id: 'step-1',
-      title: '分析需求与仓库上下文',
+      title: 'Analyze requirements and repo context',
       tool: 'model',
       action: 'inspect repository',
       risk: 'low',
       status: 'pending',
-      verification: { type: 'manual', expression: '需求范围已确认' },
+      verification: { type: 'manual', expression: 'Scope confirmed' },
     },
     {
       id: 'step-2',
-      title: intent.slice(0, 120) || '执行主要变更',
+      title: intent.slice(0, 120) || 'Apply main changes',
       tool: 'terminal',
       action: 'apply changes',
       risk: 'medium',
@@ -59,7 +59,7 @@ export function buildFallbackPlan(intent, planId = `local-${Date.now()}`) {
     },
     {
       id: 'step-3',
-      title: '验证与收尾',
+      title: 'Verify and wrap up',
       tool: 'terminal',
       action: 'npm run lint && npm test',
       risk: 'high',

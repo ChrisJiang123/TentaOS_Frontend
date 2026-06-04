@@ -7,8 +7,17 @@ const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(() => {
-    return localStorage.getItem('tentaos_lang') || 'en';
+    if (typeof localStorage === 'undefined') return 'en';
+    const chosen = localStorage.getItem('tentaos_lang_user_chosen') === '1';
+    if (!chosen) return 'en';
+    return localStorage.getItem('tentaos_lang') === 'zh' ? 'zh' : 'en';
   });
+
+  const setLangWithChoice = (next) => {
+    localStorage.setItem('tentaos_lang_user_chosen', '1');
+    localStorage.setItem('tentaos_lang', next);
+    setLang(next === 'zh' ? 'zh' : 'en');
+  };
 
   useEffect(() => {
     localStorage.setItem('tentaos_lang', lang);
@@ -16,12 +25,8 @@ export function LanguageProvider({ children }) {
   }, [lang]);
 
   const t = (key, vars) => {
-    let s =
-      strings[lang]?.[key] ??
-      translations[lang]?.[key] ??
-      strings.en[key] ??
-      translations.en?.[key] ??
-      key;
+    const pack = { ...translations.en, ...strings.en, ...(lang === 'zh' ? { ...translations.zh, ...strings.zh } : {}) };
+    let s = pack[key] ?? strings.en[key] ?? translations.en?.[key] ?? key;
     if (vars && typeof s === 'string') {
       Object.entries(vars).forEach(([k, v]) => {
         s = s.replace(`{${k}}`, String(v));
@@ -31,7 +36,7 @@ export function LanguageProvider({ children }) {
   };
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t }}>
+    <LanguageContext.Provider value={{ lang, setLang: setLangWithChoice, t }}>
       {children}
     </LanguageContext.Provider>
   );

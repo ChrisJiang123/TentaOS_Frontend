@@ -185,7 +185,7 @@ export function normalizeEngineTask(api, meta = {}) {
     raw?.prompt ||
     raw?.goal ||
     '';
-  const title = (goal && goal.slice(0, 80)) || `任务 ${id}`;
+  const title = (goal && goal.slice(0, 80)) || `Task ${id}`;
 
   const stepRecords = extractSteps(raw);
   const resultByStepId = buildResultByStepId(raw?.results);

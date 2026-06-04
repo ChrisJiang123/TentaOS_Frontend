@@ -27,7 +27,7 @@ const evidence = read('src/components/run/EvidencePanel.jsx');
 assert(evidence.includes('diff'));
 
 const verification = read('src/lib/taskVerification.js');
-assert(verification.includes('待验证'));
+assert(verification.includes('verifyPending') || verification.includes('Pending verification'));
 assert(verification.includes('getDisplayTaskStatus'));
 
 const taskDetail = read('src/pages/TaskDetail.jsx');

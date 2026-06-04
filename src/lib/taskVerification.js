@@ -3,21 +3,22 @@
  * Display rules for verification-backed completion (Phase 6).
  * UI must follow backend verification.result — never invent pass/fail.
  */
+import { tStatic, getAppLang } from '@/i18n/useStrings';
 
-export function stepVerificationLabel(step) {
+export function stepVerificationLabel(step, lang = getAppLang()) {
   const v = step?.verification;
   const result = v?.result;
   if (result === 'pass') {
-    return { icon: 'pass', text: v?.detail ? `✓ ${v.detail}` : '✓ 验证通过' };
+    return { icon: 'pass', text: v?.detail ? `✓ ${v.detail}` : `✓ ${tStatic('verifyPass', lang)}` };
   }
   if (result === 'fail') {
-    return { icon: 'fail', text: v?.detail ? `✗ ${v.detail}` : '✗ 验证失败' };
+    return { icon: 'fail', text: v?.detail ? `✗ ${v.detail}` : `✗ ${tStatic('verifyFail', lang)}` };
   }
   if (step?.status === 'passed' || step?.status === 'completed') {
-    return { icon: 'pending', text: '待验证' };
+    return { icon: 'pending', text: tStatic('verifyPending', lang) };
   }
   if (step?.status === 'failed') {
-    return { icon: 'fail', text: '步骤失败' };
+    return { icon: 'fail', text: tStatic('stepFailed', lang) };
   }
   return null;
 }

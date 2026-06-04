@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getStepStatusConfig } from '@/lib/pipelineStatus';
 import { stepVerificationLabel } from '@/lib/taskVerification';
+import { useStrings } from '@/i18n/useStrings';
 import StepApprovalInline from './StepApprovalInline';
 
 const TOOL_ICONS = {
@@ -37,6 +38,7 @@ export default function PipelineStepList({
   onRollback,
   rollingBack,
 }) {
+  const { t, lang } = useStrings();
   const runningRef = useRef(null);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function PipelineStepList({
   if (!pipeline?.steps?.length) {
     return (
       <div className="rounded-xl border border-white/[0.06] p-8 text-center text-sm text-white/35">
-        暂无步骤数据
+        {t('noSteps')}
       </div>
     );
   }
@@ -60,7 +62,7 @@ export default function PipelineStepList({
         const StatusIcon = statusCfg.icon;
         const selected = selectedStepId === step.id;
         const isRunning = step.status === 'running';
-        const vLabel = stepVerificationLabel(step);
+        const vLabel = stepVerificationLabel(step, lang);
         const approval = step._approval;
         const autoRule = step._autoApproved;
 
@@ -90,16 +92,18 @@ export default function PipelineStepList({
                     <span className="text-sm font-medium text-white">{step.title}</span>
                     {step.risk === 'high' && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/25">
-                        需审批
+                        {t('highRiskNeedsApproval')}
                       </span>
                     )}
                     {autoRule && (
-                      <span className="text-[10px] text-emerald-400/80">auto-approved ({autoRule})</span>
+                      <span className="text-[10px] text-emerald-400/80">
+                        {t('autoApproved')} ({autoRule})
+                      </span>
                     )}
                   </div>
                   {step.verification?.expression && (
                     <p className="text-[11px] text-white/40">
-                      验证：{step.verification.expression}
+                      {t('verifyPrefix')} {step.verification.expression}
                     </p>
                   )}
                   {vLabel && (
@@ -118,7 +122,7 @@ export default function PipelineStepList({
                     <div className="flex items-center gap-2 mt-2">
                       <span className="flex items-center gap-1 text-[10px] text-cyan-400/80">
                         <Flag className="w-3 h-3" />
-                        检查点 {step.checkpointId}
+                        {t('checkpoint')} {step.checkpointId}
                       </span>
                       {mode === 'live' && onRollback && (
                         <button
@@ -131,7 +135,7 @@ export default function PipelineStepList({
                           className="text-[10px] text-white/40 hover:text-amber-300 flex items-center gap-1"
                         >
                           <RotateCcw className="w-3 h-3" />
-                          Rollback to here
+                          {t('rollbackToHere')}
                         </button>
                       )}
                     </div>

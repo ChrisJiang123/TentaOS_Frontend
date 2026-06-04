@@ -1,13 +1,16 @@
 // @ts-nocheck
 import { fetchBillingMe } from './billingAccountApi.js';
+import { tStatic, getAppLang } from '@/i18n/useStrings';
 
 /**
  * Check whether user can start a new task (Phase 20).
  * @returns {{ allowed: boolean, reason?: string, billing?: object }}
  */
 export async function checkTaskQuota() {
+  const lang = getAppLang();
   try {
     const billing = await fetchBillingMe({ timeoutMs: 8000 });
+
     const limit = Number(
       billing?.monthly_credit_limit ??
         billing?.monthly_allowance ??
@@ -20,7 +23,7 @@ export async function checkTaskQuota() {
     if (billing?.quota_exceeded || billing?.over_limit) {
       return {
         allowed: false,
-        reason: '本月额度已用尽，请升级套餐或购买额度',
+        reason: tStatic('quotaMonthlyExhausted', lang),
         billing,
       };
     }
@@ -28,7 +31,7 @@ export async function checkTaskQuota() {
     if (Number.isFinite(balance) && balance <= 0 && limit > 0) {
       return {
         allowed: false,
-        reason: '额度不足，请前往 Usage 升级或充值',
+        reason: tStatic('quotaInsufficient', lang),
         billing,
       };
     }
@@ -36,7 +39,7 @@ export async function checkTaskQuota() {
     if (limit > 0 && used >= limit) {
       return {
         allowed: false,
-        reason: '已达到本月任务额度上限',
+        reason: tStatic('quotaTaskLimit', lang),
         billing,
       };
     }

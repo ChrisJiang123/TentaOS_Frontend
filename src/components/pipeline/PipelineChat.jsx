@@ -243,11 +243,13 @@ export default function PipelineChat({
               <div className="flex items-center gap-3 text-[11px]">
                 <span className="flex items-center gap-1 text-emerald-400">
                   <DollarSign className="w-3 h-3" />
-                  预估: ${(pipeline.total_estimated_cost_usd || 0).toFixed(3)}
+                  {t('planEstCost')}: ${(pipeline.total_estimated_cost_usd || 0).toFixed(3)}
                 </span>
                 <span className="flex items-center gap-1 text-blue-400">
                   <Clock className="w-3 h-3" />
-                  ~{Math.round((pipeline.estimated_duration_seconds || 60) / 60)}分钟
+                  {t('estDurationMin', {
+                    n: Math.round((pipeline.estimated_duration_seconds || 60) / 60),
+                  })}
                 </span>
               </div>
             </div>
@@ -274,7 +276,8 @@ export default function PipelineChat({
                 className="flex-1 bg-blue-600 hover:bg-blue-500 text-white h-10 text-sm font-medium rounded-xl"
               >
                 <Play className="w-4 h-4 mr-2" />
-                开始运行 ({pipeline.steps.length} 步 · ~${(pipeline.total_estimated_cost_usd || 0).toFixed(3)})
+                {t('planStartRun')} ({pipeline.steps.length} {t('planSteps')} · ~$
+                {(pipeline.total_estimated_cost_usd || 0).toFixed(3)})
               </Button>
               <Button
                 onClick={handleUseCheaper}
@@ -282,7 +285,7 @@ export default function PipelineChat({
                 className="border-white/10 text-white/50 hover:text-emerald-400 hover:border-emerald-500/20 hover:bg-emerald-500/5 h-10 text-xs rounded-xl px-4"
               >
                 <Coins className="w-4 h-4 mr-1.5" />
-                用更便宜的
+                {t('planUseCheaper')}
               </Button>
             </div>
           </motion.div>

@@ -1,20 +1,31 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import engineClient from '@/lib/engineClient';
 import { Shield, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
+import { useStrings } from '@/i18n/useStrings';
 
 const riskColors = {
-  low: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', label: 'Low Risk' },
-  medium: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', label: 'Medium Risk' },
-  high: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', label: 'High Risk' },
+  low: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', label: 'Low risk' },
+  medium: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', label: 'Medium risk' },
+  high: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', label: 'High risk' },
 };
 
 export default function ApprovalDialog() {
   const { toast } = useToast();
+  const { t } = useStrings();
   const [approval, setApproval] = useState(null);
+  const open = Boolean(approval);
 
   useEffect(() => {
     return engineClient.on('approval_required', (data) => {
@@ -22,77 +33,111 @@ export default function ApprovalDialog() {
     });
   }, []);
 
-  if (!approval) return null;
+  const close = useCallback(() => setApproval(null), []);
 
-  const risk = riskColors[approval.risk_level] || riskColors.medium;
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') close();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, close]);
+
+  const risk = riskColors[approval?.risk_level] || riskColors.medium;
 
   const handleDecision = async (approved) => {
-    const id = approval.approval_id || approval.id;
+    const id = approval?.approval_id || approval?.id;
     if (id) {
       try {
         await engineClient.approveViaAPI(id, approved, '');
         toast({
-          title: approved ? '已批准' : '已拒绝',
-          description: `审批 ID: ${id}`,
+          title: approved ? t('approve') : t('reject'),
+          description: `Approval ${id}`,
         });
       } catch (e) {
         console.error('Approval API failed:', e);
         toast({
           variant: 'destructive',
-          title: '审批请求失败',
+          title: t('approvalFailed'),
           description: e instanceof Error ? e.message : String(e),
         });
         return;
       }
     }
-    setApproval(null);
+    close();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#0E0E15] border border-white/[0.1] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", risk.bg)}>
-            <Shield className={cn("w-5 h-5", risk.text)} />
+    <Dialog open={open} onOpenChange={(next) => !next && close()}>
+      <DialogContent
+        className="bg-[#0E0E15] border-white/10 text-white sm:max-w-md"
+        onPointerDownOutside={close}
+        onEscapeKeyDown={close}
+      >
+        <DialogHeader>
+          <div className="flex items-start gap-3 pr-6">
+            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', risk.bg)}>
+              <Shield className={cn('w-5 h-5', risk.text)} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="text-white text-left">{t('needsApproval')}</DialogTitle>
+              <span
+                className={cn(
+                  'inline-block mt-1 text-[11px] px-2 py-0.5 rounded-full border',
+                  risk.bg,
+                  risk.text,
+                  risk.border,
+                )}
+              >
+                {risk.label}
+              </span>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-white">需要审批</h3>
-            <span className={cn("text-[11px] px-2 py-0.5 rounded-full", risk.bg, risk.text, risk.border, "border")}>
-              {risk.label}
-            </span>
+          <DialogDescription className="text-left text-white/55 pt-2">
+            {approval?.description ||
+              approval?.summary ||
+              'An agent action requires your approval before it can continue.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        {approval?.agent && (
+          <p className="text-[11px] text-white/35 -mt-2">Agent: {approval.agent}</p>
+        )}
+        {approval?.action_type && (
+          <p className="text-[11px] text-white/35">Action: {approval.action_type}</p>
+        )}
+
+        <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={close}
+            className="text-white/50 hover:text-white hover:bg-white/[0.06]"
+          >
+            {t('dismissLater')}
+          </Button>
+          <div className="flex gap-2 flex-1 sm:flex-initial">
+            <Button
+              type="button"
+              onClick={() => handleDecision(false)}
+              variant="outline"
+              className="flex-1 border-red-500/30 text-red-400 hover:bg-red-500/10"
+            >
+              <XCircle className="w-4 h-4 mr-2" />
+              {t('reject')}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => handleDecision(true)}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              {t('approve')}
+            </Button>
           </div>
-        </div>
-
-        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 mb-5">
-          <p className="text-sm text-white/70 leading-relaxed">
-            {approval.description || approval.summary || 'An agent action requires your approval.'}
-          </p>
-          {approval.agent && (
-            <p className="text-[11px] text-white/30 mt-2">Agent: {approval.agent}</p>
-          )}
-          {approval.action_type && (
-            <p className="text-[11px] text-white/30">Action: {approval.action_type}</p>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => handleDecision(true)}
-            className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white h-10 text-sm rounded-xl"
-          >
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            批准
-          </Button>
-          <Button
-            onClick={() => handleDecision(false)}
-            variant="outline"
-            className="flex-1 border-red-500/30 text-red-400 hover:bg-red-500/10 h-10 text-sm rounded-xl"
-          >
-            <XCircle className="w-4 h-4 mr-2" />
-            拒绝
-          </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatCostShort } from '@/lib/formatNumbers';
 import { motion } from 'framer-motion';
+import { useStrings } from '@/i18n/useStrings';
 
 const TEMPLATES = [
   {
@@ -14,7 +15,9 @@ const TEMPLATES = [
     name: '📰 每日行业简报',
     nameEn: 'Daily Briefing',
     description: '搜索真实新闻，生成行业简报',
+    descriptionEn: 'Search real news and generate an industry briefing',
     input_placeholder: '输入关注的行业（如：AI、SaaS、跨境电商）',
+    input_placeholder_en: 'Industry to track (e.g. AI, SaaS, e-commerce)',
     pipeline: {
       pipeline_name: '每日行业简报',
       description: '搜索+筛选+撰写行业简报',
@@ -35,7 +38,9 @@ const TEMPLATES = [
     name: '🔍 竞品分析报告',
     nameEn: 'Competitor Analysis',
     description: '深度分析竞品功能、定价、优劣势',
+    descriptionEn: 'Deep dive on features, pricing, and positioning',
     input_placeholder: '输入竞品名称（如：Notion, Linear, Slack）',
+    input_placeholder_en: 'Competitor names (e.g. Notion, Linear, Slack)',
     pipeline: {
       pipeline_name: '竞品分析报告',
       description: '搜索+分析+报告生成',
@@ -56,7 +61,9 @@ const TEMPLATES = [
     name: '✍️ 博客文章生成',
     nameEn: 'Blog Post',
     description: '从调研到成稿，自动生成一篇有深度的文章',
+    descriptionEn: 'Research through publish — generate a long-form post',
     input_placeholder: '输入文章主题（如：AI Agent 是下一个大机会）',
+    input_placeholder_en: 'Article topic (e.g. Why AI agents matter now)',
     pipeline: {
       pipeline_name: '博客文章生成',
       description: '调研+大纲+撰写+审查+修改',
@@ -78,7 +85,9 @@ const TEMPLATES = [
     name: '📧 冷邮件序列',
     nameEn: 'Cold Email Sequence',
     description: '生成 3-5 封渐进式冷邮件，附带个性化策略',
+    descriptionEn: 'Generate a 3–5 email outbound sequence with personalization',
     input_placeholder: '输入目标客户（如：SaaS CEO，需要 AI 自动化）',
+    input_placeholder_en: 'Target persona (e.g. SaaS CEO needing AI automation)',
     pipeline: {
       pipeline_name: '冷邮件序列',
       description: '分析痛点+撰写邮件+审查',
@@ -98,7 +107,9 @@ const TEMPLATES = [
     name: '🔧 代码审查',
     nameEn: 'Code Review',
     description: '安全性、性能、可维护性全面审查',
+    descriptionEn: 'Security, performance, and maintainability review',
     input_placeholder: '粘贴你的代码',
+    input_placeholder_en: 'Paste your code',
     pipeline: {
       pipeline_name: '代码审查',
       description: '安全审查+性能审查+报告整合',
@@ -113,11 +124,23 @@ const TEMPLATES = [
   },
 ];
 
+function templateDisplay(tpl, lang) {
+  const en = lang !== 'zh';
+  return {
+    name: en && tpl.nameEn ? tpl.nameEn : tpl.name,
+    description: en && tpl.descriptionEn ? tpl.descriptionEn : tpl.description,
+    input_placeholder:
+      en && tpl.input_placeholder_en ? tpl.input_placeholder_en : tpl.input_placeholder,
+  };
+}
+
 export default function TemplateSelector({ onSelect, isSubmitting = false }) {
+  const { t, lang } = useStrings();
   const [selectedId, setSelectedId] = useState(null);
   const [userInput, setUserInput] = useState('');
 
-  const selected = TEMPLATES.find(t => t.id === selectedId);
+  const selected = TEMPLATES.find((tpl) => tpl.id === selectedId);
+  const selectedView = selected ? templateDisplay(selected, lang) : null;
 
   const handleLaunch = () => {
     if (!selected || !userInput.trim()) return;
@@ -127,7 +150,8 @@ export default function TemplateSelector({ onSelect, isSubmitting = false }) {
       ...s,
       task: s.task.replace('{input}', userInput.trim()),
     }));
-    pipeline.pipeline_name = selected.name + ': ' + userInput.trim().slice(0, 40);
+    const label = templateDisplay(selected, lang).name;
+    pipeline.pipeline_name = `${label}: ${userInput.trim().slice(0, 40)}`;
     onSelect(userInput.trim(), pipeline);
     setSelectedId(null);
     setUserInput('');
@@ -135,52 +159,54 @@ export default function TemplateSelector({ onSelect, isSubmitting = false }) {
 
   return (
     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-      <h3 className="text-sm font-medium text-white mb-1">⚡ 快速开始 — 选一个模板</h3>
-      <p className="text-[11px] text-white/30 mb-4">点击模板 → 填关键词 → 一键运行</p>
+      <h3 className="text-sm font-medium text-white mb-1">⚡ {t('templateQuickStart')}</h3>
+      <p className="text-[11px] text-white/30 mb-4">{t('templateQuickStartHint')}</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {TEMPLATES.map((t) => (
+        {TEMPLATES.map((tpl) => {
+          const view = templateDisplay(tpl, lang);
+          return (
           <motion.button
-            key={t.id}
+            key={tpl.id}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            onClick={() => { setSelectedId(t.id === selectedId ? null : t.id); setUserInput(''); }}
+            onClick={() => { setSelectedId(tpl.id === selectedId ? null : tpl.id); setUserInput(''); }}
             className={cn(
               "text-left p-4 rounded-xl border transition-all",
-              selectedId === t.id
+              selectedId === tpl.id
                 ? "border-[#00E5FF]/30 bg-[#00E5FF]/[0.05]"
                 : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]"
             )}
           >
             <div className="flex items-center gap-2 mb-2">
-              <t.icon className="w-4 h-4" style={{ color: t.color }} />
-              <span className="text-xs font-medium text-white">{t.name}</span>
+              <tpl.icon className="w-4 h-4" style={{ color: tpl.color }} />
+              <span className="text-xs font-medium text-white">{view.name}</span>
             </div>
-            <p className="text-[11px] text-white/40 mb-2">{t.description}</p>
+            <p className="text-[11px] text-white/40 mb-2">{view.description}</p>
             <div className="flex items-center gap-2 text-[10px] text-white/25">
-              <span>{t.pipeline.steps.length} 步</span>
+              <span>{tpl.pipeline.steps.length} {t('templateSteps')}</span>
               <span>·</span>
-              <span>~{formatCostShort(t.pipeline.total_estimated_cost_usd, 3)}</span>
+              <span>~{formatCostShort(tpl.pipeline.total_estimated_cost_usd, 3)}</span>
               <span>·</span>
-              <span>~{Math.round(t.pipeline.estimated_duration_seconds / 60)}分钟</span>
+              <span>~{Math.round(tpl.pipeline.estimated_duration_seconds / 60)} {t('templateMinutes')}</span>
             </div>
           </motion.button>
-        ))}
+        );})}
       </div>
 
       {/* Input area when template selected */}
-      {selected && (
+      {selected && selectedView && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           className="mt-4 p-4 bg-white/[0.03] border border-white/[0.08] rounded-xl"
         >
-          <p className="text-xs text-white/50 mb-2">{selected.name}</p>
+          <p className="text-xs text-white/50 mb-2">{selectedView.name}</p>
           <div className="flex gap-3">
             <textarea
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              placeholder={selected.input_placeholder}
+              placeholder={selectedView.input_placeholder}
               className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-lg p-3 text-sm text-white placeholder:text-white/25 resize-none outline-none min-h-[60px]"
               rows={2}
               onKeyDown={(e) => {
@@ -190,7 +216,7 @@ export default function TemplateSelector({ onSelect, isSubmitting = false }) {
           </div>
           <div className="flex items-center justify-between mt-3">
             <span className="text-[10px] text-white/25">
-              {selected.pipeline.steps.length} 步 · 预估 {formatCostShort(selected.pipeline.total_estimated_cost_usd, 3)} · ~{Math.round(selected.pipeline.estimated_duration_seconds / 60)} 分钟
+              {selected.pipeline.steps.length} {t('templateSteps')} · est. {formatCostShort(selected.pipeline.total_estimated_cost_usd, 3)} · ~{Math.round(selected.pipeline.estimated_duration_seconds / 60)} {t('templateMinutes')}
             </span>
             <Button
               onClick={handleLaunch}
@@ -199,7 +225,7 @@ export default function TemplateSelector({ onSelect, isSubmitting = false }) {
               className="bg-[#00E5FF] text-[#06060B] hover:bg-[#00E5FF]/80 h-8 text-xs font-semibold px-4 disabled:opacity-40"
             >
               <Play className="w-3.5 h-3.5 mr-1" />
-              {isSubmitting ? '提交中…' : '运行模板'}
+              {isSubmitting ? t('templateSubmitting') : t('templateRun')}
             </Button>
           </div>
         </motion.div>

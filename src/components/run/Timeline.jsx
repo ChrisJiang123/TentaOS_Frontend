@@ -1,20 +1,19 @@
 // @ts-nocheck
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { useStrings, tStatic, getAppLang } from '@/i18n/useStrings';
 
-const TYPE_LABELS = {
-  step: '步骤',
-  approval: '审批',
-  checkpoint: '检查点',
-  fork: 'Fork',
-  merge: '合并',
-  task: '任务',
-};
-
-/**
- * Phase 15 — horizontal event timeline for replay / completed runs.
- */
 export default function Timeline({ events = [], selectedIndex = 0, onSelect, mode = 'replay' }) {
+  const { t } = useStrings();
+  const typeLabels = {
+    step: t('timelineStep'),
+    approval: t('timelineApproval'),
+    checkpoint: t('timelineCheckpoint'),
+    fork: t('timelineFork'),
+    merge: t('timelineMerge'),
+    task: t('timelineTask'),
+  };
+
   const sorted = useMemo(
     () => [...events].sort((a, b) => (a.ts || 0) - (b.ts || 0)),
     [events],
@@ -27,7 +26,7 @@ export default function Timeline({ events = [], selectedIndex = 0, onSelect, mod
       className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 overflow-x-auto"
       data-testid="run-timeline"
     >
-      <p className="text-[11px] text-white/40 mb-3 uppercase tracking-wider">执行时间线</p>
+      <p className="text-[11px] text-white/40 mb-3 uppercase tracking-wider">{t('timeline')}</p>
       <div className="flex items-center gap-1 min-w-max pb-2">
         {sorted.map((ev, i) => {
           const active = i === selectedIndex;
@@ -52,7 +51,7 @@ export default function Timeline({ events = [], selectedIndex = 0, onSelect, mod
                   (!ev.type || ev.type === 'step') && 'bg-blue-400',
                 )}
               />
-              <span className="text-[9px] text-white/50">{TYPE_LABELS[ev.type] || ev.type}</span>
+              <span className="text-[9px] text-white/50">{typeLabels[ev.type] || ev.type}</span>
               <span className="text-[9px] text-white/70 line-clamp-2 text-center max-w-[80px]">
                 {ev.label}
               </span>
@@ -77,6 +76,7 @@ export default function Timeline({ events = [], selectedIndex = 0, onSelect, mod
 
 /** Build timeline nodes from pipeline + runtime buffers. */
 export function buildTimelineEvents(pipeline, runtimeExtras = {}) {
+  const lang = getAppLang();
   const events = [];
   const baseTs = Date.now() - (pipeline?.steps?.length || 1) * 60000;
 
@@ -94,7 +94,7 @@ export function buildTimelineEvents(pipeline, runtimeExtras = {}) {
         type: 'checkpoint',
         ts: baseTs + i * 60000 + 1000,
         stepId: step.id,
-        label: `检查点 ${step.checkpointId}`,
+        label: tStatic('timelineCheckpointLabel', lang, { id: step.checkpointId }),
       });
     }
     if (step._approval) {
@@ -103,7 +103,7 @@ export function buildTimelineEvents(pipeline, runtimeExtras = {}) {
         type: 'approval',
         ts: baseTs + i * 60000 + 500,
         stepId: step.id,
-        label: `审批 · ${step.title}`,
+        label: tStatic('timelineApprovalLabel', lang, { title: step.title }),
       });
     }
   });
@@ -122,7 +122,7 @@ export function buildTimelineEvents(pipeline, runtimeExtras = {}) {
       id: `merge-${mi}`,
       type: 'merge',
       ts: baseTs + 120000 + mi * 1000,
-      label: `合并 · ${m.fork_id || 'winner'}`,
+      label: tStatic('timelineMergeLabel', lang, { id: m.fork_id || 'winner' }),
     });
   });
 

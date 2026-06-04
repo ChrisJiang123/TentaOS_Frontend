@@ -83,7 +83,7 @@ export default function RunStatusBar({ pipeline, mode, onStop, stopping }) {
           </span>
         )}
         {canStop && (
-          <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialog open={confirmOpen} onOpenChange={(o) => setConfirmOpen(o)}>
             <AlertDialogTrigger asChild>
               <Button
                 variant="outline"

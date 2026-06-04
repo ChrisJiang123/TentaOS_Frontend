@@ -11,13 +11,11 @@ import {
 } from '@/config';
 import engineClient from '@/lib/engineClient';
 import { Loader2, Plug, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
+import { useStrings } from '@/i18n/useStrings';
 
-/**
- * Wraps Dashboard. Auto-connects to the public demo Engine when healthy;
- * otherwise shows a manual connection guide.
- */
 export default function ConnectionGate({ children, onConnected }) {
-  const [status, setStatus] = useState('checking'); // checking | connected | offline
+  const { t } = useStrings();
+  const [status, setStatus] = useState('checking');
   const [input, setInput] = useState('');
   const [probing, setProbing] = useState(false);
   const [resolvedEngineUrl, setResolvedEngineUrl] = useState(ENGINE_URL);
@@ -74,10 +72,10 @@ export default function ConnectionGate({ children, onConnected }) {
     }
 
     init();
-    const t = setInterval(probe, 15000);
+    const interval = setInterval(probe, 15000);
     return () => {
       cancelled = true;
-      clearInterval(t);
+      clearInterval(interval);
     };
   }, [probe]);
 
@@ -86,7 +84,7 @@ export default function ConnectionGate({ children, onConnected }) {
       <div className="fixed inset-0 flex items-center justify-center bg-[#06060B]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-7 h-7 text-blue-500 animate-spin" />
-          <span className="text-xs text-white/40">正在连接 Engine…</span>
+          <span className="text-xs text-white/40">{t('connectingEngine')}</span>
         </div>
       </div>
     );
@@ -105,32 +103,32 @@ export default function ConnectionGate({ children, onConnected }) {
               <Plug className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-white">连接你的 TentaOS Engine</h1>
-              <p className="text-xs text-white/40">无法自动连接 {DEFAULT_DEMO_ENGINE_URL}</p>
+              <h1 className="text-lg font-semibold text-white">{t('connectEngineTitle')}</h1>
+              <p className="text-xs text-white/40">
+                {t('connectEngineFailed')} {DEFAULT_DEMO_ENGINE_URL}
+              </p>
             </div>
           </div>
 
           <div className="space-y-3 text-sm text-white/60 mb-5">
-            <p>请确认：</p>
+            <p>{t('connectChecklistTitle')}</p>
             <ol className="space-y-2 text-[13px] text-white/50 list-decimal list-inside">
-              <li>Engine 已在你的电脑上启动（<code className="text-cyan-300/80 bg-white/[0.04] px-1 rounded">node server.js</code>）</li>
-              <li>默认 demo 地址为 <span className="font-mono text-cyan-300/80">{DEFAULT_DEMO_ENGINE_URL}</span></li>
-              <li>若使用本地或 ngrok 隧道，请在下方手动填写 HTTPS Engine 地址</li>
+              <li>{t('connectCheck1')}</li>
+              <li>
+                {t('connectCheck2')} <span className="font-mono text-cyan-300/80">{DEFAULT_DEMO_ENGINE_URL}</span>
+              </li>
+              <li>{t('connectCheck3')}</li>
             </ol>
           </div>
 
           {mixedContentRisk && (
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 mb-4">
               <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-              <p className="text-[12px] text-red-300/90">
-                当前地址是 <span className="font-mono">{resolvedEngineUrl}</span>，是 http。
-                这个页面是 https，浏览器会拦截 http 请求（任务发不出去且不报错）。
-                请改用 <span className="font-semibold">https</span> 地址。
-              </p>
+              <p className="text-[12px] text-red-300/90">{t('connectMixedContent', { url: resolvedEngineUrl })}</p>
             </div>
           )}
 
-          <label className="text-[11px] text-white/40 block mb-1.5">Engine 地址</label>
+          <label className="text-[11px] text-white/40 block mb-1.5">{t('engineUrlLabel')}</label>
           <div className="flex gap-2">
             <input
               type="text"
@@ -147,20 +145,22 @@ export default function ConnectionGate({ children, onConnected }) {
               disabled={!input.trim()}
               className="px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium disabled:opacity-30 flex items-center gap-1.5 whitespace-nowrap"
             >
-              连接 <ArrowRight className="w-3.5 h-3.5" />
+              {t('connectButton')} <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
           <div className="flex items-center justify-between mt-5 pt-4 border-t border-white/[0.06]">
             <div className="text-[11px] text-white/30 font-mono">
-              <div>当前: {resolvedEngineUrl}</div>
+              <div>
+                {t('currentUrl')}: {resolvedEngineUrl}
+              </div>
               <div>WS: {resolvedWsUrl}</div>
-              {hasEngineOverride() && <div className="text-amber-400/70">已用自定义地址</div>}
+              {hasEngineOverride() && <div className="text-amber-400/70">{t('customUrlActive')}</div>}
             </div>
             <div className="flex items-center gap-2">
               {hasEngineOverride() && (
                 <button onClick={clearEngineUrl} className="text-[11px] text-white/40 hover:text-white/60">
-                  重置
+                  {t('reset')}
                 </button>
               )}
               <button
@@ -169,15 +169,13 @@ export default function ConnectionGate({ children, onConnected }) {
                 className="text-[11px] text-blue-400/80 hover:text-blue-400 flex items-center gap-1"
               >
                 {probing ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                重试连接
+                {t('retryConnect')}
               </button>
             </div>
           </div>
         </div>
 
-        <p className="text-center text-[11px] text-white/25 mt-4">
-          本地开发（前后端同机）可直接用 http://localhost:3001 —— 不会有 https 拦截问题。
-        </p>
+        <p className="text-center text-[11px] text-white/25 mt-4">{t('connectLocalDevHint')}</p>
       </div>
     </div>
   );
