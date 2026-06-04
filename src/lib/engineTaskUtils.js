@@ -34,34 +34,41 @@ export function isTerminalEngineStatus(status) {
   return ['completed', 'failed', 'cancelled'].includes(status);
 }
 
+function pickAnswerString(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
 /**
- * Final answer from Engine task (REST or WS).
- * Priority: answer → result.answer → output_text / output
- * (aliases final_answer / finalAnswer / response / result_text also read as answer).
+ * OpenRouter-synthesized final answer (REST or WS).
+ * Do not use task.output / result.output — those are raw step execution output.
  */
 export function extractTaskAnswer(raw) {
   if (!raw || typeof raw !== 'object') return undefined;
 
-  const direct =
-    raw.answer ??
-    raw.final_answer ??
-    raw.finalAnswer ??
-    raw.response ??
-    raw.result_text;
-  if (typeof direct === 'string' && direct.trim()) return direct.trim();
+  const result = raw.result && typeof raw.result === 'object' ? raw.result : null;
 
-  const result = raw.result;
-  if (result && typeof result === 'object') {
-    const fromResult = result.answer ?? result.text;
-    if (typeof fromResult === 'string' && fromResult.trim()) return fromResult.trim();
-    const out = result.output ?? result.output_text;
-    if (typeof out === 'string' && out.trim()) return out.trim();
-  }
+  return (
+    pickAnswerString(raw.answer) ??
+    pickAnswerString(result?.answer) ??
+    pickAnswerString(raw.final_answer) ??
+    pickAnswerString(raw.finalAnswer) ??
+    pickAnswerString(raw.output_text) ??
+    pickAnswerString(raw.response) ??
+    pickAnswerString(raw.result_text) ??
+    pickAnswerString(result?.output_text) ??
+    pickAnswerString(result?.text)
+  );
+}
 
-  const fallback = raw.output_text ?? raw.output;
-  if (typeof fallback === 'string' && fallback.trim()) return fallback.trim();
-
-  return undefined;
+/** `answer_source` / `answer_model` from Engine (e.g. openrouter + gpt-4.1-mini). */
+export function extractTaskAnswerMeta(raw) {
+  if (!raw || typeof raw !== 'object') return {};
+  const answer_source = raw.answer_source ?? raw.answerSource;
+  const answer_model = raw.answer_model ?? raw.answerModel;
+  return {
+    ...(answer_source ? { answer_source: String(answer_source) } : {}),
+    ...(answer_model ? { answer_model: String(answer_model) } : {}),
+  };
 }
 
 /** Unwrap `{ ok, task }` or nested submit payloads into the task record. */
@@ -247,6 +254,7 @@ export function normalizeEngineTask(api, meta = {}) {
     timeline: raw?.timeline,
     output: raw?.output,
     answer: extractTaskAnswer(raw),
+    ...extractTaskAnswerMeta(raw),
     results: raw?.results,
     pipeline_id: raw?.pipeline_id ?? raw?.pipelineId,
     source: 'engine',

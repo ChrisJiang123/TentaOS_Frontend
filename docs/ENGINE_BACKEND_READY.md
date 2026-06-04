@@ -42,15 +42,20 @@
 | 9 | GET/POST | `/api/approvals` | 队列 + 决策 |
 | 10 | POST | `/api/task/:id/rollback` | `{ checkpoint_id }` |
 
-## 最终回答字段（完成态）
+## 最终回答字段（完成态，Engine 174624+）
 
-读取顺序（与后端一致）：
+任务完成前由 OpenRouter 合成最终回答；`GET /api/task/:id` 与 `task_completed` / `execution_completed` 事件字段一致。
 
-1. `task.answer`（及 `final_answer` / `response` / `result_text` 别名）
-2. `task.result?.answer`（及 `result.text`）
-3. `task.output_text` 或 `task.output`
+读取顺序（`extractTaskAnswer`，**勿用** `task.output` / `result.output`）：
 
-展示：`RunView`「最终回答」卡片；已完成任务列表卡片副标题。
+1. `task.answer`
+2. `task.result?.answer`
+3. `task.final_answer` / `output_text` / `response` / `result_text`
+4. `task.result?.output_text` / `result.text`
+
+真实模型回答：`answer_source === "openrouter"`，`answer_model` 如 `openai/gpt-4.1-mini`。
+
+展示：`RunView`「最终回答」卡片（含 model 徽章）；`POST /api/approvals/:id` 幂等（重复 resolve 不 404）。
 
 ## 验证规则（前后端一致）
 

@@ -69,6 +69,8 @@ export interface TaskSummary {
   actual_cost?: number;
   /** Final answer when task completed (Engine: answer / result.answer / output_text). */
   answer?: string;
+  answer_source?: string;
+  answer_model?: string;
 }
 
 export interface VerificationSummary {
@@ -120,4 +122,7 @@ export interface Pipeline {
   actual_cost?: number;
   plan_id?: string;
   answer?: string;
+  /** e.g. `openrouter` when answer is model-synthesized */
+  answer_source?: string;
+  answer_model?: string;
 }

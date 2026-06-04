@@ -7,6 +7,7 @@ import {
   isTerminalEngineStatus,
   isActiveEngineStatus,
   extractTaskAnswer,
+  extractTaskAnswerMeta,
 } from './engineTaskUtils.js';
 import { PIPELINE_WS_EVENTS } from './pipelineWsEvents.js';
 import { engineTaskStore } from './engineTaskStore.js';
@@ -346,15 +347,18 @@ class PipelineRuntimeStore {
         }
         break;
       case 'task_completed':
+      case 'execution_completed':
       case 'completed':
       case 'task_finished': {
         const answer = extractTaskAnswer(data);
+        const answerMeta = extractTaskAnswerMeta(data);
         rt.pipeline = {
           ...rt.pipeline,
           status: 'completed',
           verification_summary: data.verification_summary ?? rt.pipeline.verification_summary,
           steps,
           ...(answer ? { answer } : {}),
+          ...answerMeta,
         };
         rt.pollActive = false;
         this.loadDiff(id).catch(() => {});
@@ -444,7 +448,11 @@ class PipelineRuntimeStore {
         break;
     }
 
-    if (type !== 'task_completed' && type !== 'task_failed') {
+    if (
+      type !== 'task_completed' &&
+      type !== 'execution_completed' &&
+      type !== 'task_failed'
+    ) {
       rt.pipeline = { ...rt.pipeline, steps };
       this._notify();
     }

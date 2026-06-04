@@ -4,7 +4,7 @@
  */
 import assert from 'node:assert/strict';
 import { derivePipeline, deriveStep } from '../src/lib/derivePipeline.js';
-import { extractTaskAnswer } from '../src/lib/engineTaskUtils.js';
+import { extractTaskAnswer, extractTaskAnswerMeta } from '../src/lib/engineTaskUtils.js';
 
 const mockTask = {
   task: {
@@ -113,6 +113,20 @@ assert.equal(
   extractTaskAnswer({ answer: 'primary', result: { answer: 'secondary' } }),
   'primary',
 );
+assert.equal(extractTaskAnswer({ answer: 'model', output: 'step junk' }), 'model');
+assert.equal(extractTaskAnswer({ output: 'only steps' }), undefined);
+assert.equal(
+  extractTaskAnswer({ result: { output: 'raw step', output_text: 'synthesized' } }),
+  'synthesized',
+);
+
+assert.deepEqual(
+  extractTaskAnswerMeta({
+    answer_source: 'openrouter',
+    answer_model: 'openai/gpt-4.1-mini',
+  }),
+  { answer_source: 'openrouter', answer_model: 'openai/gpt-4.1-mini' },
+);
 
 const withAnswer = derivePipeline(
   {
@@ -125,6 +139,24 @@ const withAnswer = derivePipeline(
   { mode: 'replay' },
 );
 assert.equal(withAnswer.answer, '任务完成后的总结');
+
+const withOpenRouter = derivePipeline(
+  {
+    task: {
+      ...mockTask.task,
+      status: 'completed',
+      answer: '公网样本答案',
+      answer_source: 'openrouter',
+      answer_model: 'openai/gpt-4.1-mini',
+      output: 'must not win',
+      result: { answer: '公网样本答案', output_text: '公网样本答案', output: 'step' },
+    },
+  },
+  { mode: 'replay' },
+);
+assert.equal(withOpenRouter.answer, '公网样本答案');
+assert.equal(withOpenRouter.answer_source, 'openrouter');
+assert.equal(withOpenRouter.answer_model, 'openai/gpt-4.1-mini');
 
 // eslint-disable-next-line no-console
 console.log('derive-pipeline.test.mjs: all assertions passed');

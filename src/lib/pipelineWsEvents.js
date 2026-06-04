@@ -15,6 +15,7 @@ export const PIPELINE_WS_EVENTS = [
   'auto_approved',
   'checkpoint_created',
   'task_completed',
+  'execution_completed',
   'completed',
   'task_finished',
   'task_failed',
