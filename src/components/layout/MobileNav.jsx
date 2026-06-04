@@ -64,7 +64,11 @@ export default function MobileNav() {
         <div className="flex items-center gap-3 min-w-0">
           <TentaLogo size="sm" />
           <div className="flex items-center gap-2 text-[11px] text-white/45 min-w-0">
-            {top.status && <span className="truncate">Status: <span className="text-white/70">{top.status}</span></span>}
+            {top.status && (
+              <span className="truncate">
+                {t('statusLabel')}: <span className="text-white/70">{top.status}</span>
+              </span>
+            )}
             {top.credits != null && <span className="whitespace-nowrap">· {top.credits.toLocaleString()} cr</span>}
             {billing.isError && <span className="text-amber-300/80">· {t('mobileBillingOff')}</span>}
           </div>

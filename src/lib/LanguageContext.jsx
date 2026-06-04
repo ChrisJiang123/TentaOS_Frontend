@@ -25,8 +25,13 @@ export function LanguageProvider({ children }) {
   }, [lang]);
 
   const t = (key, vars) => {
-    const pack = { ...translations.en, ...strings.en, ...(lang === 'zh' ? { ...translations.zh, ...strings.zh } : {}) };
-    let s = pack[key] ?? strings.en[key] ?? translations.en?.[key] ?? key;
+    let s;
+    if (lang === 'zh') {
+      s = strings.zh[key] ?? translations.zh?.[key] ?? strings.en[key] ?? translations.en?.[key];
+    } else {
+      s = strings.en[key] ?? translations.en?.[key];
+    }
+    if (s == null || s === '') s = String(key);
     if (vars && typeof s === 'string') {
       Object.entries(vars).forEach(([k, v]) => {
         s = s.replace(`{${k}}`, String(v));

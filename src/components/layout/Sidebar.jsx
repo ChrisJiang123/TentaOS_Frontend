@@ -72,7 +72,7 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        'h-screen min-h-0 flex flex-col bg-[#0F141F] border-r border-white/[0.06] transition-[width] duration-300 sticky top-0 shrink-0',
+        'h-full min-h-0 flex flex-col bg-[#0F141F] border-r border-white/[0.06] transition-[width] duration-300 shrink-0',
         collapsed ? 'w-[72px]' : 'w-[220px]',
       )}
     >
@@ -130,7 +130,7 @@ export default function Sidebar() {
                 to="/pricing"
                 className="text-[10px] px-1.5 py-0.5 rounded text-white/60 hover:text-white border border-white/10 hover:bg-white/[0.06]"
               >
-                Pricing
+                {t('pricing')}
               </Link>
             </div>
             <p className="text-[11px] text-white/75 truncate mt-1">{account.email || t('accountAnonymous')}</p>

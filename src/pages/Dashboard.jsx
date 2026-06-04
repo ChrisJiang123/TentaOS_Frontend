@@ -101,8 +101,8 @@ export default function Dashboard() {
 
   return (
     <ConnectionGate onConnected={() => engineTaskStore.refreshList()}>
-      <div className="min-h-screen p-6 lg:p-8" data-testid="dashboard-page">
-        <div className="max-w-7xl mx-auto">
+      <div className="w-full min-w-0 p-3 sm:p-5 lg:p-6 xl:p-8 overflow-x-hidden" data-testid="dashboard-page">
+        <div className="w-full max-w-7xl mx-auto min-w-0">
           <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
             <div>
               <h1 className="text-2xl font-semibold text-white tracking-tight">
@@ -112,8 +112,10 @@ export default function Dashboard() {
               {health && (
                 <p className="text-[11px] text-white/30 mt-1">
                   {t('engineHealth')}: {health.status ?? '—'}
-                  {health.active_tasks != null && ` · active ${health.active_tasks}`}
-                  {health.pending_approvals != null && ` · approvals ${health.pending_approvals}`}
+                  {health.active_tasks != null &&
+                    ` · ${t('healthActive', { n: health.active_tasks })}`}
+                  {health.pending_approvals != null &&
+                    ` · ${t('healthApprovals', { n: health.pending_approvals })}`}
                 </p>
               )}
               {listDebug.loading && !listDebug.lastFetchAt && (
@@ -128,7 +130,7 @@ export default function Dashboard() {
             <StatsBar tasks={tasks} approvals={syntheticApprovals} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+          <div className="grid grid-cols-1 min-w-0 xl:grid-cols-[minmax(0,1fr)_minmax(220px,260px)] gap-4 xl:gap-6">
             <div className="space-y-6">
               <PipelineChat
                 onEngineTaskSubmitted={async () => {
@@ -191,7 +193,7 @@ export default function Dashboard() {
                     </TabsList>
                   </Tabs>
                   <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <SearchBar value={search} onChange={setSearch} />
+                    <SearchBar value={search} onChange={setSearch} placeholder={t('searchTasks')} />
                     <span className="text-xs text-white/30 whitespace-nowrap">
                       {filteredTasks.length} {t('tasks')}
                     </span>
@@ -229,7 +231,7 @@ export default function Dashboard() {
               )}
             </div>
 
-            <div className="hidden lg:block space-y-6">
+            <div className="hidden xl:block space-y-6 min-w-0">
               <CostDashboard tasks={tasks} />
               <AgentSidebar agents={agents} />
             </div>

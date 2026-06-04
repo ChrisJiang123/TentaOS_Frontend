@@ -53,7 +53,7 @@ export default function Settings() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       data-testid="settings-page"
-      className="min-h-screen p-6 lg:p-8"
+      className="w-full min-w-0 p-3 sm:p-5 lg:p-6 xl:p-8 overflow-x-hidden"
     >
       <div className="max-w-2xl mx-auto">
         {/* Header */}
@@ -70,28 +70,28 @@ export default function Settings() {
           <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-5">
               <Settings2 className="w-4 h-4 text-white/50" />
-              <h2 className="text-sm font-medium text-white">Engine Status & API</h2>
+              <h2 className="text-sm font-medium text-white">{t('settingsEngineTitle')}</h2>
             </div>
 
             <div className="space-y-3">
               <InfoRow label="ENGINE_URL" value={ENGINE_URL} />
               <InfoRow label="WS_URL" value={WS_URL} />
               {hasEngineUrlOverride() && (
-                <p className="text-[11px] text-amber-400/90">当前使用 localStorage 覆盖（无需重新 build）</p>
+                <p className="text-[11px] text-amber-400/90">{t('settingsEngineOverride')}</p>
               )}
               <InfoRow label="WebSocket" value={`${conn.state}${conn.connected ? ' (connected)' : ''}`} />
               <InfoRow
                 label="Health"
                 value={
                   healthLoading
-                    ? 'Loading…'
+                    ? t('loading')
                     : healthError
-                      ? 'Error'
-                      : (health?.status ?? 'OK')
+                      ? t('error')
+                      : (health?.status ?? t('ok'))
                 }
               />
               <div className="space-y-2 pt-2 border-t border-white/[0.06]">
-                <label className="text-xs text-white/40">Engine URL（运行时覆盖）</label>
+                <label className="text-xs text-white/40">{t('settingsEngineUrlLabel')}</label>
                 <p className="text-sm text-white font-mono break-all">{ENGINE_URL}</p>
                 <p className="text-xs text-white/30 font-mono break-all">WS: {WS_URL}</p>
                 <div className="flex gap-2 mt-2">
@@ -110,45 +110,43 @@ export default function Settings() {
                     onClick={() => clearEngineUrlOverride()}
                     className="px-3 py-2 text-xs text-white/40 hover:text-white/60 border border-white/[0.08] rounded-lg shrink-0"
                   >
-                    重置
+                    {t('reset')}
                   </button>
                 </div>
-                <p className="text-[10px] text-white/20">
-                  输入 Engine 地址后按回车，页面会自动刷新。本地开发用 http://localhost:3001；远程 demo 默认 {`https://engine.tentaos.com`}，也可手动填写 ngrok 等地址。
-                </p>
+                <p className="text-[10px] text-white/20">{t('settingsEngineUrlHint')}</p>
               </div>
             </div>
           </div>
 
           <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-            <h2 className="text-sm font-medium text-white mb-4">Control plane status</h2>
+            <h2 className="text-sm font-medium text-white mb-4">{t('settingsControlPlaneTitle')}</h2>
             <div className="space-y-2">
               <InfoRow label="Active Engine URL" value={ENGINE_URL} />
               <InfoRow label="Inferred WS URL" value={WS_URL} />
               <InfoRow
                 label="Health"
                 value={
-                  healthLoading ? 'Loading…' : healthError ? 'Unreachable' : (health?.status ?? 'OK')
+                  healthLoading ? t('loading') : healthError ? t('unreachable') : (health?.status ?? t('ok'))
                 }
               />
               <InfoRow
                 label="Task API (GET /api/tasks)"
                 value={
                   taskApi.isLoading
-                    ? 'Checking…'
+                    ? t('checking')
                     : taskApi.data?.ok
-                      ? `OK · ${taskApi.data.count ?? 0} tasks`
-                      : `Error${taskApi.data?.error ? `: ${taskApi.data.error}` : ''}`
+                      ? `${t('ok')} · ${taskApi.data.count ?? 0} ${t('tasks')}`
+                      : `${t('error')}${taskApi.data?.error ? `: ${taskApi.data.error}` : ''}`
                 }
               />
               <InfoRow
                 label="Control plane"
                 value={
                   controlPlane.isLoading
-                    ? 'Checking…'
+                    ? t('checking')
                     : controlPlane.data?.ok
-                      ? controlPlane.data.status?.status || controlPlane.data.status?.phase || 'Connected'
-                      : 'Not available yet'
+                      ? controlPlane.data.status?.status || controlPlane.data.status?.phase || t('connected')
+                      : t('notAvailableYet')
                 }
               />
             </div>
@@ -172,11 +170,11 @@ export default function Settings() {
           </div>
 
           <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-            <h2 className="text-sm font-medium text-white mb-4">账户登录（Phase 19）</h2>
+            <h2 className="text-sm font-medium text-white mb-4">{t('settingsAuthTitle')}</h2>
             {isAuthenticated && getAuthToken() ? (
-              <p className="text-xs text-emerald-400/90 mb-3">已使用 Engine token 登录</p>
+              <p className="text-xs text-emerald-400/90 mb-3">{t('settingsAuthLoggedIn')}</p>
             ) : (
-              <p className="text-xs text-white/40 mb-3">未登录时使用本地模式；登录后偏好与模板同步到账户</p>
+              <p className="text-xs text-white/40 mb-3">{t('settingsAuthLocal')}</p>
             )}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
               <input
@@ -188,7 +186,7 @@ export default function Settings() {
               />
               <input
                 type="password"
-                placeholder="密码"
+                placeholder={t('settingsPassword')}
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
                 className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white"
@@ -209,25 +207,25 @@ export default function Settings() {
                   }
                 }}
               >
-                登录
+                {t('settingsLogin')}
               </button>
               <button
                 type="button"
                 className="px-4 py-2 rounded-lg border border-white/10 text-white/60 text-sm"
                 onClick={() => loginDemo()}
               >
-                本地模式
+                {t('settingsLocalMode')}
               </button>
             </div>
           </div>
 
           <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-            <h2 className="text-sm font-medium text-white mb-4">执行偏好（Phase 10）</h2>
+            <h2 className="text-sm font-medium text-white mb-4">{t('settingsPrefsTitle')}</h2>
             <ExecutionPreferences />
           </div>
 
           <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-            <h2 className="text-sm font-medium text-white mb-4">权限与密钥（Phase 17）</h2>
+            <h2 className="text-sm font-medium text-white mb-4">{t('settingsPermsTitle')}</h2>
             <ExecutionPermissions />
           </div>
 

@@ -28,12 +28,15 @@ export default function AppLayout() {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-[#06060B]">
-      <div className="hidden lg:block">
+    <div className="flex h-dvh max-h-[100dvh] w-full overflow-hidden bg-[#06060B]">
+      <div className="hidden lg:flex h-full min-h-0 shrink-0">
         <Sidebar />
       </div>
       <MobileNav />
-      <main id="app-scroll-container" className="flex-1 overflow-auto pt-14 lg:pt-0 flex flex-col min-w-0">
+      <main
+        id="app-scroll-container"
+        className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden pt-14 lg:pt-0 flex flex-col"
+      >
         <PipelineRunStatusBar />
         <div className="flex-1 min-h-0 flex flex-col">
           <RoutedPageContent />

@@ -5,7 +5,9 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatCostShort } from '@/lib/formatNumbers';
 import { formatDistanceToNow } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 import { getTaskStatusConfig } from '@/lib/pipelineStatus';
+import { useStrings } from '@/i18n/useStrings';
 
 const packColors = {
   growth: 'text-purple-400 bg-purple-500/10',
@@ -14,11 +16,18 @@ const packColors = {
 };
 
 export default function TaskCard({ task }) {
+  const { t, lang } = useStrings();
   const status = getTaskStatusConfig(task.status);
+  const statusLabel = t(task.status) || status.label;
   const StatusIcon = status.icon;
   const progress = task.steps_total > 0 ? (task.steps_completed / task.steps_total) * 100 : 0;
 
-  const timeAgo = task.created_date ? formatDistanceToNow(new Date(task.created_date), { addSuffix: true }) : '';
+  const timeAgo = task.created_date
+    ? formatDistanceToNow(new Date(task.created_date), {
+        addSuffix: true,
+        locale: lang === 'zh' ? zhCN : undefined,
+      })
+    : '';
 
   const agentCount = task.assigned_agents?.length || 0;
 
@@ -54,7 +63,7 @@ export default function TaskCard({ task }) {
         <div className="flex items-center gap-3 text-xs">
           <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-md", status.bg)}>
             <StatusIcon className={cn("w-3 h-3", status.color, status.spin && "animate-spin")} />
-            <span className={status.color}>{status.label}</span>
+            <span className={status.color}>{statusLabel}</span>
           </div>
           {task.pack && (
             <span className={cn("px-2 py-1 rounded-md text-[11px] capitalize", packColors[task.pack])}>
@@ -83,7 +92,9 @@ export default function TaskCard({ task }) {
         {(task.status === 'running' || task.status === 'planning') && task.steps_total > 0 && (
           <div className="mt-3">
             <div className="flex items-center justify-between text-[11px] text-white/30 mb-1.5">
-              <span>Step {task.steps_completed}/{task.steps_total}</span>
+              <span>
+                {t('taskStepProgress', { done: task.steps_completed, total: task.steps_total })}
+              </span>
               <span>{Math.round(progress)}%</span>
             </div>
             <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
@@ -100,14 +111,14 @@ export default function TaskCard({ task }) {
         {task.status === 'awaiting_approval' && (
           <div className="mt-3 px-3 py-2 rounded-lg bg-amber-500/5 border border-amber-500/10 flex items-center gap-2">
             <Shield className="w-3.5 h-3.5 text-amber-400" />
-            <p className="text-[11px] text-amber-400/70">Waiting for your approval to continue</p>
+            <p className="text-[11px] text-amber-400/70">{t('taskAwaitingContinue')}</p>
           </div>
         )}
 
         {task.status === 'failed' && (task.execution_log?.length > 0 || task.timeline?.length > 0) && (
           <div className="mt-3 px-3 py-2 rounded-lg bg-red-500/5 border border-red-500/10">
             <p className="text-[11px] text-red-400/70 line-clamp-1">
-              {(task.execution_log || task.timeline || []).filter(e => e.level === 'error' || e.type === 'error').slice(-1)[0]?.detail || 'Task failed'}
+              {(task.execution_log || task.timeline || []).filter(e => e.level === 'error' || e.type === 'error').slice(-1)[0]?.detail || t('taskFailedGeneric')}
             </p>
           </div>
         )}

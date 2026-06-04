@@ -216,7 +216,7 @@ export default function TemplateSelector({ onSelect, isSubmitting = false }) {
           </div>
           <div className="flex items-center justify-between mt-3">
             <span className="text-[10px] text-white/25">
-              {selected.pipeline.steps.length} {t('templateSteps')} · est. {formatCostShort(selected.pipeline.total_estimated_cost_usd, 3)} · ~{Math.round(selected.pipeline.estimated_duration_seconds / 60)} {t('templateMinutes')}
+              {selected.pipeline.steps.length} {t('templateSteps')} · {t('templateEst')} {formatCostShort(selected.pipeline.total_estimated_cost_usd, 3)} · ~{Math.round(selected.pipeline.estimated_duration_seconds / 60)} {t('templateMinutes')}
             </span>
             <Button
               onClick={handleLaunch}
