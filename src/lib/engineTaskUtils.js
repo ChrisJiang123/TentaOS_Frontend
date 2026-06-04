@@ -30,8 +30,16 @@ export function isActiveEngineStatus(status) {
   return ['running', 'planning', 'queued', 'awaiting_approval', 'paused'].includes(status);
 }
 
+/** Raw API statuses that mean the run is finished (after mapEngineStatus). */
+export const TASK_TERMINAL_STATUSES = ['completed', 'failed', 'cancelled'];
+
 export function isTerminalEngineStatus(status) {
-  return ['completed', 'failed', 'cancelled'].includes(status);
+  return TASK_TERMINAL_STATUSES.includes(status);
+}
+
+/** Truth-source check on mapped status (completed | failed | cancelled). */
+export function isTaskTerminalStatus(status) {
+  return isTerminalEngineStatus(mapEngineStatus(status));
 }
 
 function pickAnswerString(value) {

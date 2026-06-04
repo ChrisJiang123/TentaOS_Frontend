@@ -57,6 +57,32 @@
 
 展示：`RunView`「最终回答」卡片（含 model 徽章）；`POST /api/approvals/:id` 幂等（重复 resolve 不 404）。
 
+## 单任务停止 / 轮询 / 截图（前端实现对照）
+
+```js
+// 单任务停止
+await fetch(`${ENGINE}/api/task/${taskId}/stop`, { method: 'POST' });
+
+// 然后轮询真相源
+const task = await fetch(`${ENGINE}/api/task/${taskId}`)
+  .then((r) => r.json())
+  .then((j) => j.task);
+
+// 顶部状态条终态（mapped: completed | failed | cancelled）
+const isTerminal = ['completed', 'failed', 'cancelled'].includes(task.status);
+
+// browser 截图
+const shot = await fetch(`${ENGINE}/api/screenshot?task=${taskId}&step=${stepId}`).then((r) => r.json());
+// shot.image → data:image/png;base64,...
+```
+
+| 能力 | 前端入口 |
+|------|----------|
+| `POST /api/task/:id/stop` | `engineClient.stopTask` → `pipelineRuntimeStore.stopTask`（停止后轮询 `GET /api/task/:id` 直至终态） |
+| `GET /api/task/:id` | `refreshFromHttp` / `fetchTaskById` + `unwrapEngineTaskPayload` → `derivePipeline` |
+| 终态隐藏 Run 顶栏 | `RunStatusBar`：`isTerminalEngineStatus(pipeline.status)` |
+| 截图 | `engineClient.fetchScreenshot` → `EvidencePanel` 使用 `data.image` |
+
 ## 验证规则（前后端一致）
 
 - Plan 阶段：`step.verification.result` **不会出现**

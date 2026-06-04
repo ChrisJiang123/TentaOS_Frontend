@@ -226,10 +226,12 @@ class TentaOSClient {
     return this.requestWithMeta(bustPath(path), NO_CACHE_FETCH);
   }
 
-  /** GET /api/screenshot?task=&step= → { image: data:image/... } */
+  /** GET /api/screenshot?task=&step= → { image: "data:image/png;base64,..." } */
   async fetchScreenshot(taskId, stepId) {
     const path = `${ENGINE_PATHS.SCREENSHOT}?task=${encodeURIComponent(taskId)}&step=${encodeURIComponent(stepId)}`;
-    return this.request(bustPath(path), NO_CACHE_FETCH);
+    const payload = await this.request(bustPath(path), NO_CACHE_FETCH);
+    const image = payload?.image ?? payload?.screenshot ?? payload?.data;
+    return image ? { ...payload, image: String(image) } : payload;
   }
 
   /** GET /api/tasks/:id — no-cache, cache-bust query param. */

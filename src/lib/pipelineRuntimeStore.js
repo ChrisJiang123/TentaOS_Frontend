@@ -481,17 +481,27 @@ class PipelineRuntimeStore {
   }
 
   async stopTask(taskId) {
-    const rt = this._ensureRuntime(taskId);
+    const id = String(taskId);
+    const rt = this._ensureRuntime(id);
     rt.stopping = true;
     this._notify();
     try {
-      await engineClient.stopTask(taskId);
-      rt.pipeline = rt.pipeline ? { ...rt.pipeline, status: 'cancelled' } : rt.pipeline;
-      rt.pollActive = false;
+      await engineClient.stopTask(id);
+      // POST stop then poll GET /api/task/:id until terminal (HTTP truth source).
+      for (let i = 0; i < 15; i += 1) {
+        await this.refreshFromHttp(id);
+        const status = mapEngineStatus(this.runtimes.get(id)?.pipeline?.status);
+        if (isTerminalEngineStatus(status)) {
+          rt.pollActive = false;
+          return;
+        }
+        await sleep(1000);
+      }
+      rt.pollActive = true;
+      this._pollLoop(id);
     } finally {
       rt.stopping = false;
       this._notify();
-      await this.refreshFromHttp(taskId);
     }
   }
 

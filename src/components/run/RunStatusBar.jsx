@@ -15,15 +15,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { getTaskStatusConfig } from '@/lib/pipelineStatus';
 import { getDisplayTaskStatus } from '@/lib/taskVerification';
+import { isTerminalEngineStatus } from '@/lib/engineTaskUtils';
 import { cn } from '@/lib/utils';
 import { useStrings } from '@/i18n/useStrings';
-
-const TERMINAL_STATUSES = new Set([
-  'completed',
-  'failed',
-  'completed_with_warnings',
-  'cancelled',
-]);
 
 export default function RunStatusBar({ pipeline, mode, onStop, stopping }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -34,7 +28,7 @@ export default function RunStatusBar({ pipeline, mode, onStop, stopping }) {
   const effectiveStatus =
     displayStatus === 'failed' ? 'failed' : displayStatus === 'completed_pending' ? 'running' : pipeline.status;
 
-  if (mode === 'live' && TERMINAL_STATUSES.has(effectiveStatus)) {
+  if (mode === 'live' && isTerminalEngineStatus(pipeline.status)) {
     return null;
   }
 
