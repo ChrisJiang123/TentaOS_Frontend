@@ -4,8 +4,10 @@ import { CheckCircle2, XCircle, Clock, DollarSign, FileDiff } from 'lucide-react
 import { canShowSuccessCompletion } from '@/lib/taskVerification';
 import { formatCostShort } from '@/lib/formatNumbers';
 import { cn } from '@/lib/utils';
+import { useStrings } from '@/i18n/useStrings';
 
 export default function VerificationSummaryCard({ pipeline, onViewDiff }) {
+  const { t } = useStrings();
   if (!pipeline) return null;
   const summary = pipeline.verification_summary;
   const checks = summary?.checks || [];
@@ -32,7 +34,7 @@ export default function VerificationSummaryCard({ pipeline, onViewDiff }) {
           <XCircle className="w-5 h-5 text-red-400" />
         )}
         <h3 className="text-sm font-medium text-white">
-          {success ? '验证摘要' : '验证未通过'}
+          {success ? t('verificationSummary') : t('verificationFailed')}
         </h3>
       </div>
       {checks.length > 0 ? (
@@ -50,7 +52,7 @@ export default function VerificationSummaryCard({ pipeline, onViewDiff }) {
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-white/40 mb-4">后端未返回 verification_summary.checks</p>
+        <p className="text-xs text-white/40 mb-4">{t('noVerificationChecks')}</p>
       )}
       <div className="flex flex-wrap gap-4 text-[11px] text-white/40">
         {summary?.duration_ms != null && (
@@ -72,7 +74,7 @@ export default function VerificationSummaryCard({ pipeline, onViewDiff }) {
             className="flex items-center gap-1 text-blue-400 hover:text-blue-300"
           >
             <FileDiff className="w-3 h-3" />
-            查看最终 diff
+            {t('viewFinalDiff')}
           </button>
         )}
       </div>

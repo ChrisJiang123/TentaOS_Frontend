@@ -6,7 +6,7 @@
  * @typedef {import('../types/pipeline').Fork} Fork
  * @typedef {import('../types/pipeline').PipelineMode} PipelineMode
  */
-import { mapEngineStatus, unwrapEngineTaskPayload } from './engineTaskUtils.js';
+import { mapEngineStatus, unwrapEngineTaskPayload, extractTaskAnswer } from './engineTaskUtils.js';
 
 const RISK_LEVELS = new Set(['low', 'medium', 'high']);
 const TOOLS = new Set(['terminal', 'browser', 'file', 'model']);
@@ -219,6 +219,8 @@ export function derivePipeline(apiTask, options = {}) {
         }
       : undefined;
 
+  const answer = extractTaskAnswer(raw);
+
   return {
     taskId,
     mode: options.mode || 'live',
@@ -232,6 +234,7 @@ export function derivePipeline(apiTask, options = {}) {
     forks,
     created_date: raw.created_at || raw.created_date || new Date().toISOString(),
     actual_cost: Number(raw.actual_cost ?? raw.total_cost ?? raw.cost ?? 0) || undefined,
+    ...(answer ? { answer } : {}),
     ...(options.planId ? { plan_id: options.planId } : raw.plan_id ? { plan_id: String(raw.plan_id) } : {}),
   };
 }

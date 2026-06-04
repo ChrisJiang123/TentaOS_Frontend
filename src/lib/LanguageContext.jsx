@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import translations from './translations';
+import { strings } from '@/i18n/strings';
 
 const LanguageContext = createContext();
 
@@ -11,10 +12,22 @@ export function LanguageProvider({ children }) {
 
   useEffect(() => {
     localStorage.setItem('tentaos_lang', lang);
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   }, [lang]);
 
-  const t = (key) => {
-    return translations[lang]?.[key] || translations.en?.[key] || key;
+  const t = (key, vars) => {
+    let s =
+      strings[lang]?.[key] ??
+      translations[lang]?.[key] ??
+      strings.en[key] ??
+      translations.en?.[key] ??
+      key;
+    if (vars && typeof s === 'string') {
+      Object.entries(vars).forEach(([k, v]) => {
+        s = s.replace(`{${k}}`, String(v));
+      });
+    }
+    return s;
   };
 
   return (

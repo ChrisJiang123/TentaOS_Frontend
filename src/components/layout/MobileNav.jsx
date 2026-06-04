@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Workflow, Users, Shield, 
-  Cpu, BarChart3, Menu, X, FileText, LogOut, Download, Zap, Settings2
+  Cpu, BarChart3, Menu, X, FileText, LogOut, Download, Zap, Settings2, Stethoscope
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -19,6 +19,8 @@ const navKeys = [
   { path: '/Approvals', icon: Shield, key: 'approvals' },
   { path: '/Models', icon: Cpu, key: 'models' },
   { path: '/Usage', icon: BarChart3, key: 'usage' },
+  { path: '/Metrics', icon: BarChart3, key: 'metrics' },
+  { path: '/diagnostics', icon: Stethoscope, key: 'diagnostics' },
   { path: '/Triggers', icon: Zap, key: 'triggers' },
   { path: '/Settings', icon: Settings2, key: 'settings' },
 ];

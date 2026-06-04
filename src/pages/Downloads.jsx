@@ -58,7 +58,7 @@ export default function Downloads() {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#00E5FF]/10 border border-[#00E5FF]/20 text-xs text-[#00E5FF] mb-4">
-            v1.0.0-beta · Offline Edition
+            v1.0.0 · Offline Edition
           </div>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
             Download TentaOS Dashboard

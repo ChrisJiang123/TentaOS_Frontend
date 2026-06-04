@@ -58,7 +58,7 @@ export default function Landing() {
   const navigate = useNavigate();
 
   useSEO({
-    title: 'TentaOS — Visual AI Operating System (Beta)',
+    title: 'TentaOS — Visual AI Operating System',
     description: 'Developer-focused AI workflow platform with observable execution, approval gates, and sandboxed task runtime.',
     keywords: 'TentaOS, AI workflows, approval gates, observable AI execution, pipeline builder, BYOK, developer tools',
   });
@@ -133,7 +133,7 @@ export default function Landing() {
           <FadeIn>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-xs text-white/60 mb-8">
               <Star className="w-3 h-3 text-amber-400" />
-              Visual AI Operating System — Now in Beta
+              Visual AI Operating System
             </div>
           </FadeIn>
           <FadeIn delay={0.1}>
@@ -181,7 +181,6 @@ export default function Landing() {
               </Button>
             </div>
             <p className="text-sm text-white/35 mt-6">
-              Beta software.{' '}
               <Link to="/contact" className="text-[#00E5FF]/90 hover:text-[#00E5FF]">
                 Contact us
               </Link>{' '}
@@ -366,7 +365,7 @@ export default function Landing() {
         <div className="max-w-3xl mx-auto text-center">
           <FadeIn>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              Try TentaOS in beta
+              Get started with TentaOS
             </h2>
             <p className="text-white/40 mb-8">
               Launch the web app to explore pipelines, approvals, and execution traces.

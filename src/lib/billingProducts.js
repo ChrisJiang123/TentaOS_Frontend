@@ -25,9 +25,9 @@ export const TENTAOS_PRO_PLAN = {
 };
 
 export const FREE_PLAN = {
-  name: 'Free / Beta',
+  name: 'Free',
   priceLabel: '$0',
-  periodLabel: 'during beta',
+  periodLabel: 'forever',
   description: 'Evaluate TentaOS with core dashboard and BYOK support.',
   features: [
     'Core dashboard & task submission',

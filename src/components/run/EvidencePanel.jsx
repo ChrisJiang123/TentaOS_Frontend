@@ -4,10 +4,12 @@ import { Image, Terminal, FileDiff, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import engineClient from '@/lib/engineClient';
+import { useStrings } from '@/i18n/useStrings';
 
 function DiffView({ files = [] }) {
+  const { t } = useStrings();
   if (!files.length) {
-    return <p className="text-xs text-white/35 p-4">暂无文件变更</p>;
+    return <p className="text-xs text-white/35 p-4">{t('noDiff')}</p>;
   }
   return (
     <div className="space-y-3 max-h-[420px] overflow-auto p-2">
@@ -47,6 +49,7 @@ export default function EvidencePanel({
   diffLoading = false,
   mode = 'live',
 }) {
+  const { t } = useStrings();
   const [tab, setTab] = useState('terminal');
   const [fetchedImage, setFetchedImage] = useState(null);
   const [shotLoading, setShotLoading] = useState(false);
@@ -86,32 +89,32 @@ export default function EvidencePanel({
       data-testid="evidence-panel"
     >
       <div className="px-4 py-3 border-b border-white/[0.06]">
-        <h3 className="text-sm font-medium text-white">证据</h3>
+        <h3 className="text-sm font-medium text-white">{t('evidence')}</h3>
         {step ? (
           <p className="text-[11px] text-white/40 mt-0.5 truncate">{step.title}</p>
         ) : (
-          <p className="text-[11px] text-white/30 mt-0.5">选择左侧步骤查看</p>
+          <p className="text-[11px] text-white/30 mt-0.5">{t('evidenceSelectStep')}</p>
         )}
         {mode === 'replay' && (
-          <p className="text-[10px] text-purple-400/60 mt-1">Replay — 历史快照</p>
+          <p className="text-[10px] text-purple-400/60 mt-1">{t('replaySnapshot')}</p>
         )}
       </div>
       <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col min-h-0">
         <TabsList className="mx-3 mt-2 bg-white/[0.04] border border-white/[0.06]">
           <TabsTrigger value="screenshot" className="text-xs gap-1">
-            <Image className="w-3 h-3" /> 截图
+            <Image className="w-3 h-3" /> {t('tabScreenshot')}
           </TabsTrigger>
           <TabsTrigger value="terminal" className="text-xs gap-1">
-            <Terminal className="w-3 h-3" /> 终端
+            <Terminal className="w-3 h-3" /> {t('tabTerminal')}
           </TabsTrigger>
           <TabsTrigger value="diff" className="text-xs gap-1">
-            <FileDiff className="w-3 h-3" /> diff
+            <FileDiff className="w-3 h-3" /> {t('tabDiff')}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="screenshot" className="flex-1 m-0 p-3 min-h-[200px]">
           {shotLoading && (
             <div className="flex items-center justify-center py-12 text-white/40 text-xs gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" /> 加载截图…
+              <Loader2 className="w-4 h-4 animate-spin" /> {t('loadingScreenshot')}
             </div>
           )}
           {!shotLoading && imgSrc ? (
@@ -124,18 +127,18 @@ export default function EvidencePanel({
             </a>
           ) : null}
           {!shotLoading && !imgSrc && (
-            <p className="text-xs text-white/35 text-center py-12">暂无截图</p>
+            <p className="text-xs text-white/35 text-center py-12">{t('noScreenshot')}</p>
           )}
         </TabsContent>
         <TabsContent value="terminal" className="flex-1 m-0 p-0 min-h-[200px]">
           <pre className="h-full max-h-[400px] overflow-auto p-4 text-[11px] font-mono text-white/55 bg-black/40 leading-relaxed">
-            {terminalText || '暂无终端输出'}
+            {terminalText || t('noTerminal')}
           </pre>
         </TabsContent>
         <TabsContent value="diff" className="flex-1 m-0 min-h-[200px]">
           {diffLoading ? (
             <div className="flex items-center justify-center py-16 text-white/40 text-xs gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" /> 加载 diff…
+              <Loader2 className="w-4 h-4 animate-spin" /> {t('loadingDiff')}
             </div>
           ) : (
             <DiffView files={diffFiles} />

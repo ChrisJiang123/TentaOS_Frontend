@@ -67,6 +67,8 @@ export interface TaskSummary {
   steps_total: number;
   created_date: string;
   actual_cost?: number;
+  /** Final answer when task completed (Engine: answer / result.answer / output_text). */
+  answer?: string;
 }
 
 export interface VerificationSummary {
@@ -117,4 +119,5 @@ export interface Pipeline {
   created_date?: string;
   actual_cost?: number;
   plan_id?: string;
+  answer?: string;
 }

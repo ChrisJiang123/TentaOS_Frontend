@@ -19,7 +19,9 @@ const runView = read('src/components/run/RunView.jsx');
 assert(runView.includes('RunStatusBar'));
 assert(runView.includes('EvidencePanel'));
 assert(runView.includes('PipelineStepList'));
-assert(read('src/components/run/RunStatusBar.jsx').includes('run-status-bar'));
+const runStatusBar = read('src/components/run/RunStatusBar.jsx');
+assert(runStatusBar.includes('run-status-bar'));
+assert(runStatusBar.includes('TERMINAL_STATUSES'), 'hide status bar on terminal');
 
 const evidence = read('src/components/run/EvidencePanel.jsx');
 assert(evidence.includes('diff'));

@@ -34,6 +34,36 @@ export function isTerminalEngineStatus(status) {
   return ['completed', 'failed', 'cancelled'].includes(status);
 }
 
+/**
+ * Final answer from Engine task (REST or WS).
+ * Priority: answer → result.answer → output_text / output
+ * (aliases final_answer / finalAnswer / response / result_text also read as answer).
+ */
+export function extractTaskAnswer(raw) {
+  if (!raw || typeof raw !== 'object') return undefined;
+
+  const direct =
+    raw.answer ??
+    raw.final_answer ??
+    raw.finalAnswer ??
+    raw.response ??
+    raw.result_text;
+  if (typeof direct === 'string' && direct.trim()) return direct.trim();
+
+  const result = raw.result;
+  if (result && typeof result === 'object') {
+    const fromResult = result.answer ?? result.text;
+    if (typeof fromResult === 'string' && fromResult.trim()) return fromResult.trim();
+    const out = result.output ?? result.output_text;
+    if (typeof out === 'string' && out.trim()) return out.trim();
+  }
+
+  const fallback = raw.output_text ?? raw.output;
+  if (typeof fallback === 'string' && fallback.trim()) return fallback.trim();
+
+  return undefined;
+}
+
 /** Unwrap `{ ok, task }` or nested submit payloads into the task record. */
 export function unwrapEngineTaskPayload(payload) {
   if (!payload || typeof payload !== 'object') return null;
@@ -216,6 +246,7 @@ export function normalizeEngineTask(api, meta = {}) {
     execution_log: raw?.execution_log || raw?.results,
     timeline: raw?.timeline,
     output: raw?.output,
+    answer: extractTaskAnswer(raw),
     results: raw?.results,
     pipeline_id: raw?.pipeline_id ?? raw?.pipelineId,
     source: 'engine',

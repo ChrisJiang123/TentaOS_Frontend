@@ -44,7 +44,9 @@ export default function TaskCard({ task }) {
             <h3 className="text-[15px] font-medium text-white truncate group-hover:text-blue-300 transition-colors">
               {task.title}
             </h3>
-            <p className="text-xs text-white/40 mt-1 line-clamp-1">{task.goal}</p>
+            <p className="text-xs text-white/40 mt-1 line-clamp-1">
+              {task.answer && isReplay ? task.answer : task.goal}
+            </p>
           </div>
           <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/50 transition-all ml-3 mt-1 flex-shrink-0 group-hover:translate-x-0.5" />
         </div>

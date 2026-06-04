@@ -2,7 +2,10 @@
 import { useState, useEffect } from "react";
 
 const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 1000000;
+/** After dismiss animation — remove from DOM */
+const TOAST_REMOVE_DELAY = 5000;
+const TOAST_SUCCESS_MS = 3000;
+const TOAST_ERROR_MS = 6000;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -110,8 +113,10 @@ function dispatch(action) {
   });
 }
 
-function toast({ ...props }) {
+function toast({ duration, variant, ...props }) {
   const id = genId();
+  const autoDismissMs =
+    duration ?? (variant === 'destructive' ? TOAST_ERROR_MS : TOAST_SUCCESS_MS);
 
   const update = (props) =>
     dispatch({
@@ -126,13 +131,19 @@ function toast({ ...props }) {
     type: actionTypes.ADD_TOAST,
     toast: {
       ...props,
+      variant,
       id,
       open: true,
+      duration: autoDismissMs,
       onOpenChange: (open) => {
         if (!open) dismiss();
       },
     },
   });
+
+  if (autoDismissMs > 0) {
+    setTimeout(() => dismiss(), autoDismissMs);
+  }
 
   return {
     id,

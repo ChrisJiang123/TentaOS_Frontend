@@ -15,15 +15,18 @@ import {
 } from '@/components/ui/alert-dialog';
 import ConnectionIndicator from '@/components/engine/ConnectionIndicator';
 import { usePipelineRuntime } from '@/hooks/usePipelineRuntime';
+import { useStrings } from '@/i18n/useStrings';
 import RunStatusBar from './RunStatusBar';
 import PipelineStepList from './PipelineStepList';
 import EvidencePanel from './EvidencePanel';
 import VerificationSummaryCard from './VerificationSummaryCard';
+import FinalAnswerCard from './FinalAnswerCard';
 import ForkLanes from './ForkLanes';
 import Timeline, { buildTimelineEvents } from './Timeline';
 
 export default function RunView({ taskId, mode = 'live' }) {
   const { toast } = useToast();
+  const { t } = useStrings();
   const {
     runtime,
     pipeline,
@@ -64,17 +67,29 @@ export default function RunView({ taskId, mode = 'live' }) {
     ? runtime?.terminalBuffers?.[selectedStep.id] || ''
     : '';
 
+  const handleStop = async () => {
+    try {
+      await stopTask();
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: t('toastStopFailed'),
+        description: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+
   const handleRollback = async () => {
     const cp = rollbackTarget;
     setRollbackTarget(null);
     if (!cp) return;
     try {
       await rollback(cp);
-      toast({ title: '已回滚', description: `检查点 ${cp}` });
+      toast({ title: t('toastRollbackOk'), description: `${t('checkpoint')} ${cp}` });
     } catch (err) {
       toast({
         variant: 'destructive',
-        title: '回滚失败',
+        title: t('toastRollbackFailed'),
         description: err instanceof Error ? err.message : String(err),
       });
     }
@@ -83,7 +98,7 @@ export default function RunView({ taskId, mode = 'live' }) {
   if (!taskId) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white/50 text-sm">
-        缺少任务 ID，请使用 /TaskDetail?id=…
+        {t('runViewMissingId')} — /TaskDetail?id=…
       </div>
     );
   }
@@ -92,7 +107,7 @@ export default function RunView({ taskId, mode = 'live' }) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3">
         <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-        <p className="text-sm text-white/40">加载运行视图…</p>
+        <p className="text-sm text-white/40">{t('runViewLoading')}</p>
       </div>
     );
   }
@@ -103,7 +118,7 @@ export default function RunView({ taskId, mode = 'live' }) {
         <AlertCircle className="w-8 h-8 text-red-400" />
         <p className="text-sm text-white/60">{runtime.error}</p>
         <Link to="/Dashboard" className="text-blue-400 text-sm hover:underline">
-          返回 Dashboard
+          {t('backToDashboard')}
         </Link>
       </div>
     );
@@ -117,7 +132,7 @@ export default function RunView({ taskId, mode = 'live' }) {
           className="inline-flex items-center gap-2 text-white/40 hover:text-white/60 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          返回 Runs
+          {t('backToRuns')}
         </Link>
         <ConnectionIndicator />
       </div>
@@ -125,11 +140,13 @@ export default function RunView({ taskId, mode = 'live' }) {
       <RunStatusBar
         pipeline={pipeline}
         mode={mode}
-        onStop={stopTask}
+        onStop={handleStop}
         stopping={runtime?.stopping}
       />
 
       <div className="max-w-7xl mx-auto px-6 lg:px-8 pb-12">
+        <FinalAnswerCard pipeline={pipeline} />
+
         <VerificationSummaryCard
           pipeline={pipeline}
           onViewDiff={() => {
@@ -165,7 +182,7 @@ export default function RunView({ taskId, mode = 'live' }) {
               startFork(['conservative', 'aggressive']).catch((err) =>
                 toast({
                   variant: 'destructive',
-                  title: 'Fork 失败',
+                  title: t('toastForkFailed'),
                   description: err instanceof Error ? err.message : String(err),
                 }),
               )
@@ -174,7 +191,7 @@ export default function RunView({ taskId, mode = 'live' }) {
               mergeFork(forkId).catch((err) =>
                 toast({
                   variant: 'destructive',
-                  title: '合并失败',
+                  title: t('toastMergeFailed'),
                   description: err instanceof Error ? err.message : String(err),
                 }),
               )
@@ -208,15 +225,15 @@ export default function RunView({ taskId, mode = 'live' }) {
       <AlertDialog open={Boolean(rollbackTarget)} onOpenChange={(o) => !o && setRollbackTarget(null)}>
         <AlertDialogContent className="bg-[#13131A] border-white/10 text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>回滚到此检查点？</AlertDialogTitle>
+            <AlertDialogTitle>{t('rollbackTitle')}</AlertDialogTitle>
             <AlertDialogDescription className="text-white/50">
-              工作区与任务状态将回退到检查点 {rollbackTarget}。此操作不可撤销。
+              {t('rollbackDesc', { id: rollbackTarget })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-white/50">取消</AlertDialogCancel>
+            <AlertDialogCancel className="text-white/50">{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleRollback} className="bg-amber-600 hover:bg-amber-500">
-              确认回滚
+              {t('confirmRollback')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

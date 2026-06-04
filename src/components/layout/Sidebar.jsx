@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Workflow, Users, Shield, 
   Cpu, ChevronLeft, ChevronRight, BarChart3,
-  LogOut, FileText, Download, Zap, Settings2
+  LogOut, FileText, Download, Zap, Settings2, Stethoscope
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import TentaLogo from '../brand/TentaLogo';
@@ -21,6 +21,7 @@ const navKeys = [
   { path: '/Models', icon: Cpu, key: 'models' },
   { path: '/Usage', icon: BarChart3, key: 'usage' },
   { path: '/Metrics', icon: BarChart3, key: 'metrics' },
+  { path: '/diagnostics', icon: Stethoscope, key: 'diagnostics' },
   { path: '/Triggers', icon: Zap, key: 'triggers' },
   { path: '/Settings', icon: Settings2, key: 'settings' },
 ];
@@ -116,7 +117,7 @@ export default function Sidebar() {
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-[11px] text-white/35">Account</p>
-                  <p className="text-xs text-white/75 truncate">{account.email || '未登录/匿名'}</p>
+                  <p className="text-xs text-white/75 truncate">{account.email || t('accountAnonymous')}</p>
                 </div>
                 <Link
                   to="/pricing"
@@ -133,7 +134,7 @@ export default function Sidebar() {
               </div>
               {(me.isError || billing.isError) && (
                 <p className="mt-2 text-[11px] text-amber-300/80">
-                  Billing 未连接或暂不可用
+                  {t('billingUnavailable')}
                 </p>
               )}
             </>

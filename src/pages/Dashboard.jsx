@@ -17,13 +17,13 @@ import EngineTaskMetrics from '../components/dashboard/EngineTaskMetrics';
 import EngineTaskDebugPanel from '../components/debug/EngineTaskDebugPanel';
 import TaskPanelErrorBoundary from '../components/debug/TaskPanelErrorBoundary';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useStrings } from '@/i18n/useStrings';
 import engineClient from '@/lib/engineClient';
 import ConnectionGate from '../components/engine/ConnectionGate';
 import ConnectionIndicator from '../components/engine/ConnectionIndicator';
 import BrowserPreview from '../components/engine/BrowserPreview';
 import TerminalOutput from '../components/engine/TerminalOutput';
 import ApprovalDialog from '../components/engine/ApprovalDialog';
-import EmergencyStop from '../components/engine/EmergencyStop';
 import { submitEngineTask } from '@/lib/submitEngineTask';
 import { useEngineTasks } from '@/hooks/useEngineTasks';
 import { engineTaskStore } from '@/lib/engineTaskStore';
@@ -33,7 +33,8 @@ export default function Dashboard() {
   const [search, setSearch] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t: tNav } = useLanguage();
+  const { t } = useStrings();
   const [approvalMode, setApprovalMode] = useState(false);
 
   const { tasks, listDebug, debug } = useEngineTasks();
@@ -59,15 +60,16 @@ export default function Dashboard() {
       const { res, taskId } = await submitEngineTask(goal);
       return { res, taskId, goal, pipeline };
     },
-    onSuccess: ({ taskId, goal }) => {
+    onSuccess: ({ taskId }) => {
       toast({
-        title: '已提交到 TentaOS Engine',
-        description: taskId ? `任务 ID: ${taskId}` : '请查看任务列表',
+        title: t('toastTaskSubmitted'),
+        description: taskId ? `${t('toastTaskSubmittedDesc')} (${taskId})` : t('toastTaskSubmittedDesc'),
       });
     },
     onError: (e) => {
       toast({
-        title: '模板提交失败',
+        variant: 'destructive',
+        title: t('toastSubmitFailed'),
         description: e instanceof Error ? e.message : String(e),
       });
     },
@@ -101,23 +103,23 @@ export default function Dashboard() {
 
   return (
     <ConnectionGate onConnected={() => engineTaskStore.refreshList()}>
-      <div className="min-h-screen p-6 lg:p-8">
+      <div className="min-h-screen p-6 lg:p-8" data-testid="dashboard-page">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
             <div>
               <h1 className="text-2xl font-semibold text-white tracking-tight">
-                {user?.full_name ? `${t('welcomeBack')}, ${user.full_name.split(' ')[0]}` : t('dashboard')}
+                {user?.full_name ? `${tNav('welcomeBack')}, ${user.full_name.split(' ')[0]}` : tNav('dashboard')}
               </h1>
-              <p className="text-sm text-white/40 mt-1">{t('dashboardSubtitle')}</p>
+              <p className="text-sm text-white/40 mt-1">{tNav('dashboardSubtitle')}</p>
               {health && (
                 <p className="text-[11px] text-white/30 mt-1">
-                  引擎健康：{health.status ?? '—'}
-                  {health.active_tasks != null && ` · 进行中 ${health.active_tasks}`}
-                  {health.pending_approvals != null && ` · 待审批 ${health.pending_approvals}`}
+                  {t('engineHealth')}: {health.status ?? '—'}
+                  {health.active_tasks != null && ` · active ${health.active_tasks}`}
+                  {health.pending_approvals != null && ` · approvals ${health.pending_approvals}`}
                 </p>
               )}
               {listDebug.loading && !listDebug.lastFetchAt && (
-                <p className="text-[11px] text-white/25 mt-1">Loading tasks from Engine…</p>
+                <p className="text-[11px] text-white/25 mt-1">{t('loadingTasks')}</p>
               )}
             </div>
             <ConnectionIndicator />
@@ -140,7 +142,7 @@ export default function Dashboard() {
 
               {tasks.length === 0 && (
                 <p className="text-center text-[11px] text-white/30 -mt-2">
-                  在上方输入意图并提交，或点击示例任务快速开始
+                  {t('dashboardEmptyHint')}
                 </p>
               )}
 
@@ -168,24 +170,24 @@ export default function Dashboard() {
 
               <div data-testid="runs-list">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-medium text-white/70">Runs</h2>
-                  <span className="text-[10px] text-white/30">进行中任务每 5s 刷新</span>
+                  <h2 className="text-sm font-medium text-white/70">{t('dashboardRuns')}</h2>
+                  <span className="text-[10px] text-white/30">{t('dashboardRunsRefresh')}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                   <Tabs value={filter} onValueChange={setFilter}>
                     <TabsList className="bg-white/[0.04] border border-white/[0.06]">
                       <TabsTrigger value="all" className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/50">
-                        {t('allFilter')}
+                        {tNav('allFilter')}
                       </TabsTrigger>
                       <TabsTrigger value="active" className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/50">
-                        {t('activeFilter')}
+                        {tNav('activeFilter')}
                       </TabsTrigger>
                       <TabsTrigger value="completed" className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/50">
-                        {t('completedFilter')}
+                        {tNav('completedFilter')}
                       </TabsTrigger>
                       {failedCount > 0 && (
                         <TabsTrigger value="failed" className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-red-400 text-white/50">
-                          {t('failedFilter')} ({failedCount})
+                          {tNav('failedFilter')} ({failedCount})
                         </TabsTrigger>
                       )}
                     </TabsList>
@@ -193,7 +195,7 @@ export default function Dashboard() {
                   <div className="flex items-center gap-3 w-full sm:w-auto">
                     <SearchBar value={search} onChange={setSearch} />
                     <span className="text-xs text-white/30 whitespace-nowrap">
-                      {filteredTasks.length} {t('tasks')}
+                      {filteredTasks.length} {tNav('tasks')}
                     </span>
                   </div>
                 </div>
@@ -203,15 +205,13 @@ export default function Dashboard() {
                   ))}
                   {filteredTasks.length === 0 && tasks.length > 0 && (
                     <div className="text-center py-16 text-white/30">
-                      <p className="text-sm">{t('noTasksMatch')}</p>
+                      <p className="text-sm">{tNav('noTasksMatch')}</p>
                     </div>
                   )}
                   {filteredTasks.length === 0 && tasks.length === 0 && (
                     <div className="text-center py-10 px-4 rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01]">
-                      <p className="text-sm text-white/50 mb-2">还没有任务</p>
-                      <p className="text-xs text-white/35 mb-4">
-                        使用上方 Command Bar 创建第一个任务，提交后将进入运行视图
-                      </p>
+                      <p className="text-sm text-white/50 mb-2">{t('dashboardNoTasksTitle')}</p>
+                      <p className="text-xs text-white/35 mb-4">{t('dashboardNoTasksBody')}</p>
                       <button
                         type="button"
                         className="text-xs text-blue-400 hover:text-blue-300"
@@ -219,7 +219,7 @@ export default function Dashboard() {
                           document.querySelector('[data-testid="command-bar"] textarea')?.focus()
                         }
                       >
-                        跳转到输入框 →
+                        {t('dashboardFocusCommandBar')}
                       </button>
                     </div>
                   )}
@@ -240,7 +240,6 @@ export default function Dashboard() {
         </div>
 
         <ApprovalDialog />
-        <EmergencyStop />
       </div>
     </ConnectionGate>
   );

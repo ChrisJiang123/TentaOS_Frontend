@@ -4,6 +4,7 @@
  */
 import assert from 'node:assert/strict';
 import { derivePipeline, deriveStep } from '../src/lib/derivePipeline.js';
+import { extractTaskAnswer } from '../src/lib/engineTaskUtils.js';
 
 const mockTask = {
   task: {
@@ -104,6 +105,26 @@ assert.equal(preview.mode, 'preview');
 const step = deriveStep({ step_id: 'x', status: 'completed', risk: 'LOW' }, 0);
 assert.equal(step.status, 'passed');
 assert.equal(step.risk, 'low');
+
+assert.equal(extractTaskAnswer({ answer: '最终回答' }), '最终回答');
+assert.equal(extractTaskAnswer({ result: { answer: 'from result' } }), 'from result');
+assert.equal(extractTaskAnswer({ output_text: 'from output' }), 'from output');
+assert.equal(
+  extractTaskAnswer({ answer: 'primary', result: { answer: 'secondary' } }),
+  'primary',
+);
+
+const withAnswer = derivePipeline(
+  {
+    task: {
+      ...mockTask.task,
+      status: 'completed',
+      answer: '任务完成后的总结',
+    },
+  },
+  { mode: 'replay' },
+);
+assert.equal(withAnswer.answer, '任务完成后的总结');
 
 // eslint-disable-next-line no-console
 console.log('derive-pipeline.test.mjs: all assertions passed');

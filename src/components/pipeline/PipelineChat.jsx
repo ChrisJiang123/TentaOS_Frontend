@@ -11,6 +11,8 @@ import QuickCommands from './QuickCommands';
 import StepEditor from './StepEditor';
 import CommandBar from './CommandBar';
 import PlanPreview from './PlanPreview';
+import { createPlan, planToPreviewPipeline } from '@/lib/planApi';
+import { useStrings } from '@/i18n/useStrings';
 
 const CHEAP_MODELS = ['deepseek/deepseek-chat', 'openai/gpt-4o-mini', 'google/gemini-2.5-flash'];
 
@@ -20,6 +22,7 @@ export default function PipelineChat({
   onApprovalToggle,
 }) {
   const { toast } = useToast();
+  const { t } = useStrings();
   const [message, setMessage] = useState('');
   const [pipeline, setPipeline] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -30,11 +33,27 @@ export default function PipelineChat({
   const textareaRef = useRef(null);
 
   const handleGenerate = async () => {
-    if (!message.trim()) return;
-    toast({
-      title: '计划预览即将上线',
-      description: '请先用上方 Command Bar「提交并运行」；Phase 3 将在此接入带风险标注的计划预览。',
-    });
+    const text = message.trim();
+    if (!text || loading) return;
+    setLoading(true);
+    try {
+      const plan = await createPlan(text);
+      const previewPipeline = planToPreviewPipeline(text, plan);
+      if (previewPipeline?.steps?.length) {
+        setPlanPreview({ pipeline: previewPipeline, planId: plan.plan_id, intent: text });
+        toast({ title: t('toastPlanReady'), description: t('toastPlanReadyDesc') });
+      } else {
+        setPipeline(previewPipeline);
+      }
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: t('toastSubmitFailed'),
+        description: err instanceof Error ? err.message : t('toastSubmitFailedDesc'),
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCommandSelect = (cmd) => {
@@ -101,7 +120,7 @@ export default function PipelineChat({
       const { res, taskId } = await submitEngineTask(text);
       const tid = taskId ?? parseTaskIdFromSubmitResponse(res);
       if (!tid) {
-        throw new Error('后端已响应但缺少 task_id');
+        throw new Error('Engine response missing task_id');
       }
       await notifyEngineTask(tid, text, pipeline);
       setMessage('');
@@ -111,8 +130,8 @@ export default function PipelineChat({
       console.error('Engine submit failed:', err);
       toast({
         variant: 'destructive',
-        title: '提交失败',
-        description: err instanceof Error ? err.message : '请检查 Engine 是否运行',
+        title: t('toastSubmitFailed'),
+        description: err instanceof Error ? err.message : t('toastSubmitFailedDesc'),
       });
     } finally {
       setLoading(false);
@@ -125,13 +144,13 @@ export default function PipelineChat({
       {submitted && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span className="text-sm text-emerald-400">任务已提交 — 请查看顶部运行状态条与步骤流</span>
+          <span className="text-sm text-emerald-400">{t('taskSubmittedBanner')}</span>
         </div>
       )}
       {loading && (
         <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 mb-2 text-sm text-cyan-300">
           <Loader2 className="w-4 h-4 animate-spin" />
-          Sending request…
+          {t('sendingRequest')}
         </div>
       )}
 
@@ -159,7 +178,7 @@ export default function PipelineChat({
       <details className="group rounded-xl border border-white/[0.06] bg-white/[0.01]">
         <summary className="cursor-pointer px-4 py-2 text-[11px] text-white/40 hover:text-white/60 list-none flex items-center gap-2">
           <Cpu className="w-3.5 h-3.5" />
-          高级：快捷指令 / 设计流水线
+          {t('advancedPipelineSummary')}
         </summary>
         <div className="px-4 pb-4 space-y-3 border-t border-white/[0.06]">
           <div className="relative rounded-xl border border-white/[0.08] bg-white/[0.02]">
@@ -169,7 +188,7 @@ export default function PipelineChat({
                 ref={textareaRef}
                 value={message}
                 onChange={handleMessageChange}
-                placeholder="输入 / 查看快捷指令，或描述多步流水线…"
+                placeholder={t('advancedPipelinePlaceholder')}
                 className="flex-1 bg-transparent text-white placeholder:text-white/30 resize-none outline-none text-sm min-h-[48px]"
                 rows={2}
                 onKeyDown={(e) => {
@@ -189,7 +208,7 @@ export default function PipelineChat({
                 )}
               >
                 <Shield className="w-3 h-3" />
-                {approvalMode ? '审批开' : '审批'}
+                {approvalMode ? t('approvalOn') : t('approvalOff')}
               </button>
               <Button
                 onClick={handleGenerate}
@@ -199,7 +218,7 @@ export default function PipelineChat({
                 className="border-purple-500/30 text-purple-300 h-8 text-xs"
               >
                 {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : null}
-                设计流水线
+                {t('designPipeline')}
               </Button>
             </div>
           </div>

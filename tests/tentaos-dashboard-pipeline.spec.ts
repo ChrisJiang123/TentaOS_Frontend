@@ -116,6 +116,7 @@ test.describe('Sidebar routes', () => {
     { path: '/Approvals', testId: 'approvals-page' },
     { path: '/Models', testId: 'models-page' },
     { path: '/Usage', testId: 'usage-page' },
+    { path: '/Metrics', testId: 'metrics-page' },
     { path: '/Triggers', testId: 'triggers-page' },
     { path: '/Settings', testId: 'settings-page' },
   ];
@@ -140,6 +141,7 @@ test.describe('Sidebar routes', () => {
       { href: '/Approvals', testId: 'approvals-page' },
       { href: '/Models', testId: 'models-page' },
       { href: '/Usage', testId: 'usage-page' },
+      { href: '/Metrics', testId: 'metrics-page' },
       { href: '/Triggers', testId: 'triggers-page' },
       { href: '/Settings', testId: 'settings-page' },
     ];

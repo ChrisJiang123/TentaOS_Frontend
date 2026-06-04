@@ -2,7 +2,12 @@
 import engineClient, { ENGINE_BASE_URL } from './engineClient.js';
 import { derivePipeline, deriveFork } from './derivePipeline.js';
 import { unwrapEngineTaskPayload } from './engineTaskUtils.js';
-import { mapEngineStatus, isTerminalEngineStatus, isActiveEngineStatus } from './engineTaskUtils.js';
+import {
+  mapEngineStatus,
+  isTerminalEngineStatus,
+  isActiveEngineStatus,
+  extractTaskAnswer,
+} from './engineTaskUtils.js';
 import { PIPELINE_WS_EVENTS } from './pipelineWsEvents.js';
 import { engineTaskStore } from './engineTaskStore.js';
 
@@ -341,16 +346,21 @@ class PipelineRuntimeStore {
         }
         break;
       case 'task_completed':
+      case 'completed':
+      case 'task_finished': {
+        const answer = extractTaskAnswer(data);
         rt.pipeline = {
           ...rt.pipeline,
           status: 'completed',
           verification_summary: data.verification_summary ?? rt.pipeline.verification_summary,
           steps,
+          ...(answer ? { answer } : {}),
         };
         rt.pollActive = false;
         this.loadDiff(id).catch(() => {});
         this._notify();
         return;
+      }
       case 'task_failed':
         rt.pipeline = { ...rt.pipeline, status: 'failed', steps };
         rt.pollActive = false;

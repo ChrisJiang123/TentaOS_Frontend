@@ -16,15 +16,31 @@ import {
 import { getTaskStatusConfig } from '@/lib/pipelineStatus';
 import { getDisplayTaskStatus } from '@/lib/taskVerification';
 import { cn } from '@/lib/utils';
+import { useStrings } from '@/i18n/useStrings';
+
+const TERMINAL_STATUSES = new Set([
+  'completed',
+  'failed',
+  'completed_with_warnings',
+  'cancelled',
+]);
 
 export default function RunStatusBar({ pipeline, mode, onStop, stopping }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const { t } = useStrings();
   if (!pipeline) return null;
 
   const displayStatus = getDisplayTaskStatus(pipeline);
+  const effectiveStatus =
+    displayStatus === 'failed' ? 'failed' : displayStatus === 'completed_pending' ? 'running' : pipeline.status;
+
+  if (mode === 'live' && TERMINAL_STATUSES.has(effectiveStatus)) {
+    return null;
+  }
+
   const statusCfg =
     displayStatus === 'completed_pending'
-      ? { ...getTaskStatusConfig('running'), label: '待验证' }
+      ? { ...getTaskStatusConfig('running'), label: t('pendingVerification') }
       : getTaskStatusConfig(displayStatus === 'failed' ? 'failed' : pipeline.status);
   const StatusIcon = statusCfg.icon;
   const progress =
@@ -32,12 +48,16 @@ export default function RunStatusBar({ pipeline, mode, onStop, stopping }) {
       ? Math.round((pipeline.steps_completed / pipeline.steps_total) * 100)
       : 0;
   const isLive = mode === 'live';
-  const canStop = isLive && ['running', 'planning', 'queued', 'awaiting_approval', 'paused'].includes(pipeline.status);
+  const canStop =
+    isLive &&
+    ['running', 'planning', 'queued', 'awaiting_approval', 'paused'].includes(pipeline.status);
 
   const handleStop = async () => {
     setConfirmOpen(false);
     if (onStop) await onStop();
   };
+
+  const stepTotal = pipeline.steps_total || pipeline.steps?.length || 0;
 
   return (
     <div
@@ -54,12 +74,12 @@ export default function RunStatusBar({ pipeline, mode, onStop, stopping }) {
           <span className={cn('text-sm font-medium', statusCfg.color)}>{statusCfg.label}</span>
         </div>
         <span className="text-xs text-white/40 font-mono">
-          Step {pipeline.steps_completed}/{pipeline.steps_total || pipeline.steps?.length || 0}
+          {t('stepProgress')} {pipeline.steps_completed}/{stepTotal}
           {progress > 0 && ` · ${progress}%`}
         </span>
         {mode === 'replay' && (
           <span className="text-[10px] px-2 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
-            Replay
+            {t('replay')}
           </span>
         )}
         {canStop && (
@@ -77,23 +97,23 @@ export default function RunStatusBar({ pipeline, mode, onStop, stopping }) {
                 ) : (
                   <Square className="w-3.5 h-3.5 mr-1.5 fill-current" />
                 )}
-                Stop
+                {t('stop')}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="bg-[#13131A] border-white/10 text-white">
               <AlertDialogHeader>
-                <AlertDialogTitle>确认急停？</AlertDialogTitle>
+                <AlertDialogTitle>{t('stopConfirmTitle')}</AlertDialogTitle>
                 <AlertDialogDescription className="text-white/50">
-                  将立即停止当前任务执行，已完成的步骤与检查点会保留。
+                  {t('stopConfirmDesc')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="text-white/50">取消</AlertDialogCancel>
+                <AlertDialogCancel className="text-white/50">{t('cancel')}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleStop}
                   className="bg-red-600 hover:bg-red-500"
                 >
-                  确认停止
+                  {t('confirmStop')}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

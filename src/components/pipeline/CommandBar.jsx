@@ -9,6 +9,7 @@ import { createPlan, planToPreviewPipeline } from '@/lib/planApi';
 import { listTemplates } from '@/lib/templatesApi';
 import { checkTaskQuota } from '@/lib/billingQuota';
 import { cn } from '@/lib/utils';
+import { useStrings } from '@/i18n/useStrings';
 import {
   Select,
   SelectContent,
@@ -17,27 +18,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-export const EXAMPLE_TASKS = [
-  {
-    id: 'tests',
-    label: '跑通测试',
-    text: '把这个仓库的测试跑通',
-  },
-  {
-    id: 'subscribe',
-    label: '落地页订阅',
-    text: '给落地页加一个邮箱订阅表单',
-  },
-  {
-    id: 'lint',
-    label: '修复 Lint',
-    text: '检查并修复 lint 错误',
-  },
-];
+export function getExampleTasks(t) {
+  return [
+    { id: 'tests', label: t('exampleTests'), text: t('exampleTestsText') },
+    { id: 'subscribe', label: t('exampleSubscribe'), text: t('exampleSubscribeText') },
+    { id: 'lint', label: t('exampleLint'), text: t('exampleLintText') },
+  ];
+}
 
-/**
- * Primary intent input: examples, submit with toast, navigate to Run View on success.
- */
 export default function CommandBar({
   onTaskSubmitted,
   onPlanReady,
@@ -47,11 +35,13 @@ export default function CommandBar({
 }) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useStrings();
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const textareaRef = useRef(null);
+  const exampleTasks = getExampleTasks(t);
 
   useEffect(() => {
     listTemplates().then(setTemplates).catch(() => setTemplates([]));
@@ -67,8 +57,8 @@ export default function CommandBar({
       if (!quota.allowed) {
         toast({
           variant: 'destructive',
-          title: '额度不足',
-          description: `${quota.reason} — 请前往 Usage 页升级套餐`,
+          title: t('toastQuotaExceeded'),
+          description: `${quota.reason} — ${t('toastQuotaGoUsage')}`,
         });
         return;
       }
@@ -77,8 +67,8 @@ export default function CommandBar({
         const pipeline = planToPreviewPipeline(text, plan);
         if (pipeline?.steps?.length) {
           toast({
-            title: '计划已生成',
-            description: '请确认步骤与风险标注后 Launch',
+            title: t('toastPlanReady'),
+            description: t('toastPlanReadyDesc'),
           });
           await onPlanReady({ pipeline, planId: plan.plan_id, intent: text });
           setMessage('');
@@ -88,12 +78,12 @@ export default function CommandBar({
 
       const { taskId } = await submitEngineTask(text);
       if (!taskId) {
-        throw new Error('后端已响应但缺少 task_id，无法打开运行视图');
+        throw new Error('Engine response missing task_id');
       }
 
       toast({
-        title: '任务已提交',
-        description: '正在打开运行视图…',
+        title: t('toastTaskSubmitted'),
+        description: t('toastTaskSubmittedDesc'),
       });
 
       if (onTaskSubmitted) {
@@ -106,15 +96,20 @@ export default function CommandBar({
       console.error('[CommandBar] submit failed', err);
       toast({
         variant: 'destructive',
-        title: '提交失败',
+        title: t('toastSubmitFailed'),
         description:
-          err instanceof Error
-            ? err.message
-            : '无法连接 Engine，请检查连接指示器是否为绿色',
+          err instanceof Error ? err.message : t('toastSubmitFailedDesc'),
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return;
+    e.preventDefault();
+    if (!message.trim() || loading) return;
+    handleSubmit();
   };
 
   const fillExample = (text) => {
@@ -138,20 +133,15 @@ export default function CommandBar({
             ref={textareaRef}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="描述你要 AI 做什么… 例如：把这个仓库的测试跑通"
+            onKeyDown={handleKeyDown}
+            placeholder={t('commandPlaceholder')}
             className="flex-1 bg-transparent text-white placeholder:text-white/30 resize-none outline-none text-[15px] min-h-[72px] max-h-[160px]"
             rows={3}
             disabled={loading}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit();
-              }
-            }}
           />
         </div>
         <div className="flex items-center justify-between px-4 pb-4 gap-3 flex-wrap">
-          <p className="text-[10px] text-white/25">Enter 提交 · Shift+Enter 换行</p>
+          <p className="text-[10px] text-white/25">{t('commandHint')}</p>
           <Button
             onClick={handleSubmit}
             disabled={!message.trim() || loading}
@@ -164,7 +154,7 @@ export default function CommandBar({
             ) : (
               <Play className="w-4 h-4 mr-2" />
             )}
-            {loading ? '提交中…' : '提交并运行'}
+            {loading ? t('commandSubmitting') : t('commandSubmit')}
           </Button>
         </div>
       </div>
@@ -176,12 +166,11 @@ export default function CommandBar({
             value={selectedTemplateId}
             onValueChange={(id) => {
               setSelectedTemplateId(id);
-              const tpl = templates.find((t) => t.id === id);
-              if (tpl?.steps?.[0]) {
-                const first = tpl.steps[0];
+              const tpl = templates.find((x) => x.id === id);
+              if (tpl?.steps?.[0] && onPlanReady) {
                 const hint =
-                  first.title || first.name || (typeof first === 'string' ? first : '');
-                if (hint && onPlanReady) {
+                  tpl.steps[0].title || tpl.steps[0].name || (typeof tpl.steps[0] === 'string' ? tpl.steps[0] : '');
+                if (hint) {
                   const pipeline = planToPreviewPipeline(hint, {
                     plan_id: `tpl-${tpl.id}`,
                     steps: tpl.steps,
@@ -196,12 +185,12 @@ export default function CommandBar({
             }}
           >
             <SelectTrigger className="w-[200px] h-8 text-xs bg-white/[0.03] border-white/10">
-              <SelectValue placeholder="从模板开始" />
+              <SelectValue placeholder={t('fromTemplate')} />
             </SelectTrigger>
             <SelectContent>
-              {templates.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.name}
+              {templates.map((tpl) => (
+                <SelectItem key={tpl.id} value={tpl.id}>
+                  {tpl.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -211,9 +200,9 @@ export default function CommandBar({
 
       {showExamples && (
         <div className="space-y-2">
-          <p className="text-[11px] text-white/35 uppercase tracking-wider">示例任务</p>
+          <p className="text-[11px] text-white/35 uppercase tracking-wider">{t('exampleTasks')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {EXAMPLE_TASKS.map((ex) => (
+            {exampleTasks.map((ex) => (
               <button
                 key={ex.id}
                 type="button"

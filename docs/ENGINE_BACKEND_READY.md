@@ -15,6 +15,7 @@
 | `POST /api/task/:id/stop` → 最终 `cancelled` | ✅ |
 | `GET /api/task/:id/diff`、`GET /api/screenshot` | ✅ |
 | Approvals + rollback + verification_summary | ✅ |
+| 完成态 `answer` / `final_answer` / `result` / `output_text` | ✅ 前端已接 |
 | 任务 status 枚举与前端一致（含 `cancelled`） | ✅ |
 | CORS：Vercel 前端 + ngrok header | ✅ |
 
@@ -40,6 +41,16 @@
 | 8 | GET | `/api/screenshot?task=&step=` | `{ image: "data:image/..." }` |
 | 9 | GET/POST | `/api/approvals` | 队列 + 决策 |
 | 10 | POST | `/api/task/:id/rollback` | `{ checkpoint_id }` |
+
+## 最终回答字段（完成态）
+
+读取顺序（与后端一致）：
+
+1. `task.answer`（及 `final_answer` / `response` / `result_text` 别名）
+2. `task.result?.answer`（及 `result.text`）
+3. `task.output_text` 或 `task.output`
+
+展示：`RunView`「最终回答」卡片；已完成任务列表卡片副标题。
 
 ## 验证规则（前后端一致）
 

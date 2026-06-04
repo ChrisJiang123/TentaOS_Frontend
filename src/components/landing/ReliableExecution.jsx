@@ -6,7 +6,7 @@ const cards = [
   { icon: Layers, title: 'Multi-model orchestration', desc: 'Route tasks across providers with clear execution traces.' },
   { icon: Monitor, title: 'Browser + terminal execution', desc: 'Run workflows in browser and shell contexts with observable steps.' },
   { icon: ShieldCheck, title: 'Human approval workflows', desc: 'Require approval before risky actions when you configure gates.' },
-  { icon: Box, title: 'Sandbox-first architecture', desc: 'Isolate execution paths to reduce blast radius during beta.' },
+  { icon: Box, title: 'Sandbox-first architecture', desc: 'Isolate execution paths to reduce blast radius in production workloads.' },
 ];
 
 export default function ReliableExecution() {
