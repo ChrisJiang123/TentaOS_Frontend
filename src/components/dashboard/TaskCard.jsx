@@ -5,17 +5,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatCostShort } from '@/lib/formatNumbers';
 import { formatDistanceToNow } from 'date-fns';
-
-const statusConfig = {
-  queued: { icon: Clock, color: 'text-white/40', bg: 'bg-white/5', label: 'Queued' },
-  planning: { icon: Loader2, color: 'text-blue-400', bg: 'bg-blue-500/10', label: 'Planning', spin: true },
-  running: { icon: Loader2, color: 'text-blue-400', bg: 'bg-blue-500/10', label: 'Running', spin: true },
-  paused: { icon: Pause, color: 'text-amber-400', bg: 'bg-amber-500/10', label: 'Paused' },
-  awaiting_approval: { icon: Shield, color: 'text-amber-400', bg: 'bg-amber-500/10', label: 'Awaiting Approval' },
-  completed: { icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: 'Completed' },
-  failed: { icon: XCircle, color: 'text-red-400', bg: 'bg-red-500/10', label: 'Failed' },
-  cancelled: { icon: XCircle, color: 'text-white/40', bg: 'bg-white/5', label: 'Cancelled' },
-};
+import { getTaskStatusConfig } from '@/lib/pipelineStatus';
 
 const packColors = {
   growth: 'text-purple-400 bg-purple-500/10',
@@ -24,7 +14,7 @@ const packColors = {
 };
 
 export default function TaskCard({ task }) {
-  const status = statusConfig[task.status] || statusConfig.queued;
+  const status = getTaskStatusConfig(task.status);
   const StatusIcon = status.icon;
   const progress = task.steps_total > 0 ? (task.steps_completed / task.steps_total) * 100 : 0;
 

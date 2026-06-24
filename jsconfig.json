@@ -21,7 +21,8 @@
     "src/pages/**/*.jsx",
     "src/Layout.jsx",
     "src/data/**/*.ts",
-    "src/lib/tentaosDashboardApi.ts",
+    "src/lib/**/*.js",
+    "src/types/**/*.ts",
     "shared/**/*.ts",
     "playwright.config.ts",
     "tests/**/*.ts"

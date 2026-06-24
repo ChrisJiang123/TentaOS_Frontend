@@ -10,6 +10,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
+    "test:unit": "node --test scripts/derivePipeline.test.mjs",
     "test:qa-smoke": "node scripts/qa-dashboard-pipeline-smoke.mjs",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed"
